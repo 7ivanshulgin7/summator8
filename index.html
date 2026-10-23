@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Сумматор</title>
+<meta name="description" content="Калькулятор, который показывает, как компьютер считает нулями и единицами">
+<meta name="theme-color" content="#F3F5F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F1316" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Сумматор">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;600;700&family=Unbounded:wght@600&display=swap">
+<style>
+/* Тема из Монеток: светлая по умолчанию, тёмная по системе или data-theme */
+:root{
+  --bg:#F3F5F7; --surface:#FFFFFF; --sunk:#ECEFF2; --line:#E1E5E9; --fg:#12161C; --muted:#5B6470;
+  --accent:#0F6E64; --accent-ink:#FFFFFF; --accent-soft:#DCEFEB;
+  --bad:#B23A0A; --itv:#FF2E93;
+  --display:"Unbounded","Golos Text",system-ui,sans-serif; --body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0F1316; --surface:#181D21; --sunk:#222930; --line:#2C343B; --fg:#E9EDF0; --muted:#9AA5AE;
+  --accent:#3FB8A8; --accent-ink:#06201C; --accent-soft:#173632; --bad:#F08A6A;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1316; --surface:#181D21; --sunk:#222930; --line:#2C343B; --fg:#E9EDF0; --muted:#9AA5AE;
+  --accent:#3FB8A8; --accent-ink:#06201C; --accent-soft:#173632; --bad:#F08A6A;
+  color-scheme:dark}
+
+/* iPhone: без зума от двойного тапа, без выделения долгим тапом */
+html{touch-action:manipulation;-webkit-text-size-adjust:100%}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.4 var(--body);
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+input,textarea,select{font-size:16px;-webkit-user-select:text;user-select:text}
+button{touch-action:manipulation;cursor:pointer;font:inherit}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.wrap{max-width:520px;margin:0 auto;padding-block:10px 18px;
+  padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:10px}
+header{display:flex;align-items:baseline;gap:10px;padding:4px 2px 0}
+header h1{font:600 20px/1.1 var(--display);margin:0;letter-spacing:-.01em}
+header h1 i{font-style:normal;color:var(--accent)}
+header p{margin:0;font-size:12px;color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+
+/* калькулятор */
+.adcalc{background:var(--sunk);border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.addisp{font-size:26px;text-align:right;padding:4px 6px;color:var(--muted);min-height:40px}
+.addisp span{padding:0 2px;border-bottom:2px solid transparent;cursor:pointer}
+.addisp .cur{color:var(--fg);border-bottom-color:var(--accent)}
+.addisp b{color:var(--fg)}.addisp small{font-size:15px;color:var(--muted)}
+.adkeys{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.adkeys button{height:48px;border:0;border-radius:11px;background:var(--surface);color:var(--fg);font-size:20px;font-weight:600}
+.adkeys button:active{transform:scale(.96)}
+.adkeys .op{background:var(--accent-soft);color:var(--accent)}
+.adkeys .op.sel{background:var(--accent);color:var(--accent-ink)}
+
+/* двоичный вид */
+.card{background:var(--surface);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.sub{font-size:12px;color:var(--muted)}
+.adr{display:flex;align-items:center;gap:8px}
+.adr>span{width:14px;font-weight:700;color:var(--muted)}
+.adr>b{width:40px;text-align:right}
+.adr.sum>b{width:58px;font-size:17px}
+.adb{display:flex;gap:3px;margin-left:auto}
+.adb i{width:26px;height:30px;border-radius:7px;background:var(--sunk);color:var(--muted);font-weight:700;font-style:normal;
+  display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+.adb i.on{background:var(--accent);color:var(--accent-ink)}
+.adr.sum .adb i{width:23px}
+.adleg{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:2px;margin-top:4px}
+.adleg b{color:var(--fg)}
+.scheme{background:var(--surface);border-radius:16px;padding:10px 6px}
+.scheme svg{display:block;width:100%;height:auto;font-family:var(--body)}
+
+/* тост */
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;
+  background:var(--fg);color:var(--bg);padding:9px 14px;border-radius:12px;font-size:13px;pointer-events:none;transition:.2s;max-width:calc(100% - 32px)}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* подвал и пасхалка */
+footer{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--muted);padding:6px 2px 0}
+.itv{display:inline-flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-weight:600;letter-spacing:.04em}
+.itv svg{width:20px;height:20px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>Сумм<i>а</i>тор</h1><p>как компьютер считает ноликами и единичками</p></header>
+  <main id="app" style="display:flex;flex-direction:column;gap:10px"></main>
+  <footer>
+    <span class="num" id="ver"></span>
+    <span class="itv" title="itivan">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h12M9 4v16" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none"/><path d="M12 8l4.5 12L21 8" stroke="#FF2E93" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>itivan
+    </span>
+  </footer>
+</div>
+<div id="toast" role="status"></div>
+<script>
+const APP_VER='1.0.0';
+document.getElementById('ver').textContent='v'+APP_VER;
+const $=id=>document.getElementById(id);
+let tT;function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(tT);tT=setTimeout(()=>e.classList.remove('show'),1800)}
+
+let ADD={a:0,b:0,f:'a',op:'+'};
+const adOn='var(--accent)',adOff='var(--line)',adInk='var(--accent-ink)';
+const adCell=(x,y,v,w)=>'<rect x="'+x+'" y="'+y+'" width="'+(w||16)+'" height="16" rx="4" fill="'+(v?adOn:'var(--sunk)')+'"/><text x="'+(x+(w||16)/2)+'" y="'+(y+12)+'" font-size="10" font-weight="700" text-anchor="middle" fill="'+(v?adInk:'var(--muted)')+'">'+v+'</text>';
+const adT=(x,y,t,o)=>'<text x="'+x+'" y="'+y+'" font-size="'+((o&&o.s)||8)+'" '+(o&&o.a?'text-anchor="'+o.a+'" ':'')+(o&&o.b?'font-weight="700" ':'')+'fill="'+((o&&o.c)||'var(--muted)')+'">'+t+'</text>';
+const svgWrap=(h,sv)=>'<svg viewBox="0 0 360 '+h+'" role="img">'+sv+'</svg>';
+
+// умножение: вентили И делают «A × один бит B», сумматоры складывают сдвинутые строчки
+function adMulSvg(a,b){
+  const cw=19,x0=360-16*cw,X=c=>x0+(15-c)*cw,H=62,bit=(v,i)=>(v>>i)&1;let y=8,sv='',acc=0;
+  sv+=adT(4,y+12,'A',{s:11,b:1});for(let i=0;i<8;i++)sv+=adCell(X(i)+1,y,bit(a,i));
+  sv+=adT(X(7)-4,y+12,'каждый бит A идёт на вентили И ↓',{a:'end',s:7});
+  y+=26;
+  for(let j=0;j<8;j++){const bj=bit(b,j),pp=bj?a<<j:0;
+    sv+=adT(4,y+12,'b'+j+'='+bj,{s:10,b:1,c:bj?adOn:'var(--muted)'});
+    for(let i=0;i<8;i++){const v=bit(a,i)&bj,x=X(i+j)+2;sv+='<path d="M'+x+','+y+'H'+(x+14)+'V'+(y+7)+'A7,7 0 0 1 '+x+','+(y+7)+'Z" fill="'+(v?adOn:'var(--surface)')+'" stroke="'+(v?adOn:'var(--muted)')+'" stroke-width="1.2"/>'+
+      '<line x1="'+(x+7)+'" x2="'+(x+7)+'" y1="'+(y+14)+'" y2="'+(y+20)+'" stroke="'+(v?adOn:adOff)+'" stroke-width="'+(v?2:1)+'"/>'}
+    if(j===0)sv+=adT(X(0)+20,y+9,'И',{a:'end',s:7});
+    acc+=pp;
+    const l=X(Math.min(15,j+7)),r=X(0)+cw;
+    sv+='<rect x="'+l+'" y="'+(y+20)+'" width="'+(r-l)+'" height="12" rx="3" fill="var(--sunk)" stroke="'+(bj?adOn:adOff)+'"/>'+adT((l+r)/2,y+29,bj?'сумматор: + A сдвинутое на '+j:'b'+j+'=0 — прибавлять нечего',{a:'middle',s:7,c:bj?'var(--fg)':'var(--muted)'});
+    for(let c=0;c<16;c++)if(c<=j+7||bit(acc,c))sv+=adCell(X(c)+1,y+36,bit(acc,c));
+    sv+=adT(x0-4,y+48,String(acc),{a:'end',s:9,b:1,c:'var(--fg)'});
+    y+=H}
+  return svgWrap(y+2,sv);
+}
+// деление «в столбик»: сносим бит A, пробуем вычесть B, влезло — пишем 1
+function adDivSvg(a,b){
+  const bit=(v,i)=>(v>>i)&1,H=54;let y=6,sv='',r=0;
+  sv+=adT(4,y+8,'B = '+b+' = '+b.toString(2),{s:9,b:1,c:'var(--fg)'})+adT(356,y+8,'бит ответа',{a:'end',s:8});y+=16;
+  for(let i=7;i>=0;i--){const ai=bit(a,i);r=(r<<1)|ai;const ok=r>=b,before=r;if(ok)r-=b;
+    sv+=adT(4,y+9,'сношу a'+i+'='+ai,{s:9,b:1,c:ai?adOn:'var(--muted)'});
+    for(let k=0;k<9;k++){const c=8-k;sv+=adCell(4+k*17,y+14,bit(before,c))}
+    sv+=adT(4+9*17+2,y+26,'='+before,{s:9,c:'var(--fg)'});
+    sv+='<path d="M196,'+(y+22)+'H210" stroke="'+adOff+'" stroke-width="1.4"/><rect x="210" y="'+(y+12)+'" width="44" height="20" rx="5" fill="var(--sunk)" stroke="'+(ok?adOn:'var(--muted)')+'"/>'+adT(232,y+25,'− B',{a:'middle',s:10,b:1,c:'var(--fg)'});
+    sv+='<path d="M254,'+(y+22)+'H266" stroke="'+(ok?adOn:adOff)+'" stroke-width="'+(ok?2:1.4)+'"/><path d="M282,'+(y+10)+'L294,'+(y+22)+'L282,'+(y+34)+'L270,'+(y+22)+'Z" transform="translate(-4,0)" fill="'+(ok?adOn:'var(--surface)')+'" stroke="'+(ok?adOn:'var(--muted)')+'"/>'+adT(278,y+25,'≥0',{a:'middle',s:7,b:1,c:ok?adInk:'var(--muted)'});
+    sv+='<path d="M290,'+(y+22)+'H322" stroke="'+(ok?adOn:adOff)+'" stroke-width="'+(ok?2:1.4)+'"/><circle cx="336" cy="'+(y+22)+'" r="11" fill="'+(ok?adOn:'var(--sunk)')+'"/>'+adT(336,y+26,ok?'1':'0',{a:'middle',s:12,b:1,c:ok?adInk:'var(--muted)'});
+    sv+=adT(232,y+44,ok?'влезло — вычитаю, остаток '+r:'не влезло — оставляю как было',{a:'middle',s:7,c:ok?adOn:'var(--muted)'});
+    if(i)sv+='<line x1="0" x2="360" y1="'+(y+H-3)+'" y2="'+(y+H-3)+'" stroke="var(--line)" stroke-dasharray="2 4" opacity=".5"/>';
+    y+=H}
+  return svgWrap(y+2,sv);
+}
+// сложение / вычитание: 8 полных сумматоров
+function adAddSvg(rows,c0,sub){
+  const N=8,W=360,H=90,top=6,on=adOn,off=adOff;
+  const wire=(d,v)=>'<path d="'+d+'" fill="none" stroke="'+(v?on:off)+'" stroke-width="'+(v?2.4:1.4)+'"/>';
+  const dot=(x,y,v)=>'<circle cx="'+x+'" cy="'+y+'" r="2.4" fill="'+(v?on:off)+'"/>';
+  const G=(t,x,y,v)=>{const h=13,w=30;let d=t==='and'?'M'+x+','+(y-h)+'H'+(x+16)+'A'+h+','+h+' 0 0 1 '+(x+16)+','+(y+h)+'H'+x+'Z'
+      :'M'+x+','+(y-h)+'Q'+(x+20)+','+(y-h)+' '+(x+w)+','+y+'Q'+(x+20)+','+(y+h)+' '+x+','+(y+h)+'Q'+(x+8)+','+y+' '+x+','+(y-h)+'Z';
+    return '<path d="'+d+'" fill="var(--surface)" stroke="'+(v?on:'var(--muted)')+'" stroke-width="1.6"/>'+(t==='xor'?'<path d="M'+(x-5)+','+(y-h)+'Q'+(x+3)+','+y+' '+(x-5)+','+(y+h)+'" fill="none" stroke="'+(v?on:'var(--muted)')+'" stroke-width="1.6"/>':'')+
+      '<text x="'+(x+(t==='and'?13:14))+'" y="'+(y+3)+'" font-size="7.5" text-anchor="middle" fill="var(--muted)">'+(t==='and'?'И':t==='or'?'ИЛИ':'XOR')+'</text>'};
+  let svg='<text x="150" y="'+(top+2)+'" font-size="9" fill="'+(c0?on:'var(--muted)')+'" text-anchor="end">'+(c0?'+1 для минуса':'перенос 0')+'</text>';
+  rows.forEach((r,i)=>{const y=top+i*H,Y=k=>y+k;
+    svg+='<text x="4" y="'+Y(19)+'" font-size="11" font-weight="700" fill="'+(r.A?on:'var(--muted)')+'">a'+i+'='+r.A+'</text><text x="4" y="'+Y(35)+'" font-size="11" font-weight="700" fill="'+(r.B?on:'var(--muted)')+'">b'+i+'='+r.B+'</text>';
+    svg+=wire('M38,'+Y(16)+'H70',r.A)+wire('M38,'+Y(32)+'H70',r.B)+wire('M46,'+Y(16)+'V'+Y(52)+'H70',r.A)+wire('M56,'+Y(32)+'V'+Y(68)+'H70',r.B)+dot(46,Y(16),r.A)+dot(56,Y(32),r.B);
+    svg+=wire((i?'M145,'+(y-H+86):'M145,'+Y(4))+'V'+Y(68)+'H160',r.cin)+wire('M145,'+Y(32)+'H160',r.cin)+dot(145,Y(32),r.cin);
+    svg+=wire('M100,'+Y(24)+'H128V'+Y(16)+'H160',r.s1)+wire('M128,'+Y(16)+'V'+Y(52)+'H160',r.s1)+dot(128,Y(16),r.s1);
+    svg+=wire('M96,'+Y(60)+'H108V'+Y(80)+'H212V'+Y(52)+'H226',r.c1)+wire('M188,'+Y(60)+'H200V'+Y(36)+'H226',r.c2);
+    svg+=wire('M190,'+Y(24)+'H318',r.S)+'<circle cx="330" cy="'+Y(24)+'" r="12" fill="'+(r.S?on:'var(--sunk)')+'"/><text x="330" y="'+Y(28)+'" font-size="13" font-weight="700" text-anchor="middle" fill="'+(r.S?adInk:'var(--muted)')+'">'+r.S+'</text>'+
+      '<text x="330" y="'+Y(48)+'" font-size="8" text-anchor="middle" fill="var(--muted)">s'+i+'</text>';
+    if(i===0)svg+='<text x="72" y="'+Y(45)+'" font-size="7" fill="var(--muted)">разные?</text><text x="76" y="'+Y(82)+'" font-size="7" fill="var(--muted)">обе?</text><text x="174" y="'+Y(5)+'" font-size="7" fill="var(--muted)">+ перенос</text><text x="228" y="'+Y(26)+'" font-size="7" fill="var(--muted)">хоть один?</text><text x="330" y="'+Y(60)+'" font-size="7" text-anchor="middle" fill="var(--muted)">ответ</text>';
+    if(r.co&&i<N-1)svg+='<text x="276" y="'+Y(78)+'" font-size="8" font-weight="700" fill="var(--accent)">несу 1 ↓</text>';
+    svg+=wire('M256,'+Y(44)+'H270V'+Y(86)+(i<N-1?'H145':'H300V'+Y(86)),r.co);
+    svg+=G('xor',70,Y(24),r.s1)+G('and',70,Y(60),r.c1)+G('xor',160,Y(24),r.S)+G('and',160,Y(60),r.c2)+G('or',226,Y(44),r.co);
+    if(i<N-1)svg+='<line x1="0" x2="'+W+'" y1="'+Y(88)+'" y2="'+Y(88)+'" stroke="var(--line)" stroke-dasharray="2 4" opacity=".5"/>';
+  });
+  const last=rows[N-1].co,yl=top+(N-1)*H+86;
+  svg+='<circle cx="300" cy="'+yl+'" r="3" fill="'+(last&&!sub?'var(--bad)':off)+'"/><text x="306" y="'+(yl+4)+'" font-size="10" text-anchor="'+(sub?'end':'start')+'" fill="'+(last&&!sub?'var(--bad)':'var(--muted)')+'">'+(sub?(last?'перенос 1 — выбрасываем, ответ ≥ 0':'переноса нет — ответ меньше нуля'):'перенос '+last+(last?' → s8 = 1':''))+'</text>';
+  return svgWrap(top+N*H+4,svg);
+}
+
+function draw(){
+  const N=8,bit=(v,i)=>(v>>i)&1;
+  const a=ADD.a&255,b=ADD.b&255,op=ADD.op,sub=op==='−',bb=sub?(~b)&255:b,c0=sub?1:0;let c=c0;const rows=[];
+  for(let i=0;i<N;i++){const A=bit(a,i),B=bit(bb,i),s1=A^B,c1=A&B,S=s1^c,c2=s1&c,co=c1|c2;rows.push({A,B,cin:c,s1,c1,c2,S,co});c=co}
+  const sum=a+bb+c0,res=op==='+'?a+b:sub?a-b:op==='×'?a*b:(b?Math.floor(a/b):null),rem=op==='÷'&&b?a%b:0,adder=op==='+'||sub;
+  const neg=v=>v<0?'−'+(-v):v;
+  const bits=v=>'<div class="adb">'+[...Array(N)].map((_,j)=>{const i=N-1-j;return '<i class="'+(bit(v,i)?'on':'')+'">'+bit(v,i)+'</i>'}).join('')+'</div>';
+
+  let bin='<div class="sub">Так эти же числа видит компьютер — только нолики и единички:</div>'+
+    '<div class="adr"><span>A</span><b class="num">'+a+'</b>'+bits(a)+'</div>'+
+    '<div class="adr"><span>B</span><b class="num">'+b+'</b>'+bits(b)+'</div>'+
+    (sub?'<div class="adr"><span style="width:auto;font-size:12px">B наоборот</span>'+bits(bb)+'</div>':'');
+  let legend='',scheme='';
+  if(adder){
+    bin+='<div class="adr sum"><span>=</span><b class="num">'+neg(res)+'</b><div class="adb">'+[...Array(sub?N:N+1)].map((_,j)=>{const i=(sub?N-1:N)-j;return '<i class="'+(bit(sum,i)?'on':'')+'">'+bit(sum,i)+'</i>'}).join('')+'</div></div>'+
+      (sub&&res<0?'<div class="sub">Минус компьютер записывает хитро: '+(sum&255)+' = 256 − '+(-res)+'. Так он понимает, что это −'+(-res)+'.</div>':'');
+    legend='<div class="adleg"><div><b>XOR</b> «разные?» — 1 и 0 дают 1, а две одинаковые — 0</div><div><b>И</b> «обе единички?» — тогда в эту клетку не влезает, надо перенести</div><div><b>ИЛИ</b> «есть хоть один перенос?» — передаём единичку следующему этажу</div><div><span style="color:var(--accent)">━</span> зелёный провод — бежит единичка, серый — ноль</div>'+(sub?'<div><b>Минус</b> — та же схема: B переворачиваем и добавляем 1 в самый первый перенос.</div>':'')+'</div>';
+    scheme=adAddSvg(rows,c0,sub);
+  }else if(op==='×'){
+    bin+='<div class="adr sum"><span>=</span><b class="num">'+res+'</b></div>';
+    legend='<div class="adleg"><div><b>Умножение</b> — это сдвиги и сложения. Где у B стоит единичка, берём A и сдвигаем влево на столько клеток, какой это бит. Потом всё складываем на тех же сумматорах.</div>'+
+      '<div><b>И</b> — «обе единички?»: так получаем A × один бит B. Каждая следующая строчка сдвинута на клетку влево.</div><div><b>Сумматор</b> — та же схема, что у плюса: копит строчки. Внизу — ответ.</div></div>';
+    scheme=adMulSvg(a,b);
+  }else{
+    legend='<div class="adleg"><div><b>Деление</b> — это вычитание много раз: сколько раз B влезает в A. '+(b?'Здесь '+b+' влезло '+res+' раз, осталось '+rem+'.':'На ноль делить нельзя — сколько ни вычитай ноль, ничего не убудет.')+'</div>'+
+      (b?'<div>Как в столбик: сношу по одному биту A сверху вниз и пробую вычесть B на схеме минуса. Влезло — бит ответа 1, не влезло — 0. Ответ читается по кружкам сверху вниз.</div>':'')+'</div>';
+    if(b){bin+='<div class="adr sum"><span>=</span><b class="num">'+res+'</b>'+bits(res)+'</div>'+(rem?'<div class="adr"><span style="width:auto;font-size:12px">остаток</span><b class="num">'+rem+'</b>'+bits(rem)+'</div>':'');
+      scheme=adDivSvg(a,b)}
+  }
+
+  $('app').innerHTML=
+    '<section class="adcalc"><div class="addisp num"><span data-f="a"'+(ADD.f==='a'?' class="cur"':'')+'>'+a+'</span> '+op+' <span data-f="b"'+(ADD.f==='b'?' class="cur"':'')+'>'+b+'</span> = <b>'+(res==null?'<small>на 0 нельзя</small>':neg(res)+(rem?' <small>ост. '+rem+'</small>':''))+'</b></div>'+
+      '<div class="adkeys">'+['7','8','9','C','4','5','6','÷','1','2','3','×','⌫','0','−','+'].map(k=>'<button data-ak="'+k+'"'+(/\d/.test(k)?'':' class="op'+(k===op?' sel':'')+'"')+' aria-label="'+({'⌫':'Стереть','C':'Сброс'}[k]||k)+'">'+k+'</button>').join('')+'</div></section>'+
+    '<section class="card">'+bin+legend+'</section>'+
+    (scheme?'<section class="scheme">'+scheme+'</section>':'');
+}
+function press(k){const f=ADD.f;
+  if(/\d/.test(k)){const v=ADD[f]*10+ +k;if(v>255){toast('Сумматор 8-битный: числа до 255');return}ADD[f]=v}
+  else if(k==='⌫')ADD[f]=Math.floor(ADD[f]/10);
+  else if('+−×÷'.includes(k)){ADD.op=k;ADD.f='b'}
+  else if(k==='C'){ADD={a:0,b:0,f:'a',op:'+'}}
+  draw()}
+$('app').addEventListener('click',e=>{const k=e.target.closest('[data-ak]');if(k)return press(k.dataset.ak);
+  const f=e.target.closest('[data-f]');if(f){ADD.f=f.dataset.f;draw()}});
+document.addEventListener('keydown',e=>{const m={'+':'+','-':'−','*':'×','/':'÷',Backspace:'⌫',Escape:'C',Delete:'C'}[e.key]||(/^\d$/.test(e.key)?e.key:null);
+  if(m){e.preventDefault();press(m)}});
+draw();
+
+if('serviceWorker' in navigator&&location.protocol==='https:'&&!/claude/.test(location.host))
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
