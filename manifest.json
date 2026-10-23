@@ -2,7 +2,7 @@
   "name": "Сумматор",
   "short_name": "Сумматор",
   "description": "Калькулятор, который показывает, как компьютер считает нулями и единицами",
-  "id": "/summator/",
+  "id": "summator-app",
   "lang": "ru",
   "start_url": "./",
   "scope": "./",
