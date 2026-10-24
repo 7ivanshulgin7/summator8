@@ -23,19 +23,19 @@
   --bg:#F3F5F7; --surface:#FFFFFF; --sunk:#ECEFF2; --line:#E1E5E9; --fg:#12161C; --muted:#5B6470;
   --accent:#0F6E64; --accent-ink:#FFFFFF; --accent-soft:#DCEFEB;
   --bad:#B23A0A; --itv:#FF2E93;
-  --wire:#C3CBD2; --key:#FFFFFF; --keyfn:#DDE2E6; --dock:#E6EAEE;
+  --wire:#C3CBD2; --gate:#8A949D; --key:#FFFFFF; --keyfn:#DDE2E6; --dock:#E6EAEE;
   --display:"Unbounded","Golos Text",system-ui,sans-serif; --body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   color-scheme:light;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0F1316; --surface:#181D21; --sunk:#222930; --line:#2C343B; --fg:#E9EDF0; --muted:#9AA5AE;
   --accent:#3FB8A8; --accent-ink:#06201C; --accent-soft:#1B3F3A; --bad:#F08A6A;
-  --wire:#4E5A64; --key:#2C343B; --keyfn:#3C464F; --dock:#111518;
+  --wire:#414C55; --gate:#6E7A84; --key:#2C343B; --keyfn:#3C464F; --dock:#111518;
   color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0F1316; --surface:#181D21; --sunk:#222930; --line:#2C343B; --fg:#E9EDF0; --muted:#9AA5AE;
   --accent:#3FB8A8; --accent-ink:#06201C; --accent-soft:#1B3F3A; --bad:#F08A6A;
-  --wire:#4E5A64; --key:#2C343B; --keyfn:#3C464F; --dock:#111518;
+  --wire:#414C55; --gate:#6E7A84; --key:#2C343B; --keyfn:#3C464F; --dock:#111518;
   color-scheme:dark}
 
 /* iPhone: без зума от двойного тапа, без выделения долгим тапом */
@@ -52,6 +52,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px));
   display:flex;flex-direction:column;gap:10px}
 header{display:flex;align-items:center;gap:12px;padding:4px 2px 0}
+.thm{margin-left:auto;flex:none;min-width:44px;height:44px;border:0;border-radius:22px;background:var(--sunk);color:var(--fg);font-size:13px;font-weight:600;padding:0 12px;white-space:nowrap}
 .ttl{display:flex;flex-direction:column;gap:2px}
 .ver{font-size:11px;color:var(--muted);letter-spacing:.03em}
 header h1{font:600 20px/1.1 var(--display);margin:0;letter-spacing:-.01em}
@@ -108,9 +109,11 @@ main>.card:last-child{flex:1}
 .go{stroke-dasharray:1 1;stroke-dashoffset:1;animation:go var(--st) linear calc(var(--t)*var(--st)) forwards}
 @keyframes go{to{stroke-dashoffset:0}}
 .lit{animation:lit var(--st) linear calc(var(--t)*var(--st)) both}
-@keyframes lit{from{stroke:var(--muted)}to{stroke:var(--accent)}}
+@keyframes lit{from{stroke:var(--gate)}to{stroke:var(--accent)}}
+.litg{animation:litg var(--st) linear calc(var(--t)*var(--st)) both}
+@keyframes litg{from{stroke:var(--gate);fill:var(--surface)}to{stroke:var(--accent);fill:var(--accent-soft)}}
 .litd{animation:litd var(--st) linear calc(var(--t)*var(--st)) both}
-@keyframes litd{from{fill:var(--wire)}to{fill:var(--accent)}}
+@keyframes litd{from{fill:var(--gate)}to{fill:var(--accent)}}
 .lits{animation:lits var(--st) linear calc(var(--t)*var(--st)) both}
 @keyframes lits{from{fill:var(--sunk)}to{fill:var(--accent)}}
 .pop{animation:pop var(--st) linear calc(var(--t)*var(--st)) both}
@@ -118,7 +121,7 @@ main>.card:last-child{flex:1}
 .rv{animation:rv .3s linear calc(var(--t)*var(--st)) both}
 @keyframes rv{from{opacity:.12}to{opacity:1}}
 .sw{transform-box:view-box;animation:sw var(--st) ease-out calc(var(--t)*var(--st)) both}
-@keyframes sw{from{transform:rotate(-35deg);stroke:var(--muted)}to{transform:rotate(0);stroke:var(--accent)}}
+@keyframes sw{from{transform:rotate(-35deg);stroke:var(--gate)}to{transform:rotate(0);stroke:var(--accent)}}
 .static *{animation:none!important}.static .go{stroke-dashoffset:0}
 .schbar{display:flex;justify-content:flex-end;gap:6px}
 .schbar button{border:0;background:var(--sunk);color:var(--fg);border-radius:12px;min-height:44px;padding:0 14px;font-size:15px;font-weight:600}
@@ -146,7 +149,7 @@ main>.card:last-child{flex:1}
 </head>
 <body>
 <div class="wrap">
-  <header><div class="ttl"><h1>Сумм<i>а</i>тор</h1><span class="num ver" id="ver"></span></div><p>как компьютер считает ноликами и единичками</p></header>
+  <header><div class="ttl"><h1>Сумм<i>а</i>тор</h1><span class="num ver" id="ver"></span></div><p>как компьютер считает ноликами и единичками</p><button class="thm" id="thm" aria-label="Тема"></button></header>
   <main id="app" style="display:flex;flex-direction:column;gap:10px;flex:1"></main>
 </div>
 <div id="dock"><div class="dockin" id="dockin"></div></div>
@@ -184,7 +187,7 @@ main>.card:last-child{flex:1}
   <p class="itv"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h12M9 4v16" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none"/><path d="M12 8l4.5 12L21 8" stroke="#FF2E93" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>itivan</p>
 </div></div>
 <script>
-const APP_VER='1.7.2';
+const APP_VER='1.8.0';
 document.getElementById('ver').textContent='v'+APP_VER;
 const $=id=>document.getElementById(id);
 let tT;function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(tT);tT=setTimeout(()=>e.classList.remove('show'),1800)}
@@ -202,9 +205,9 @@ const tt=t=>' style="--t:'+t+'"';
 const vW=(d,v,t)=>'<path d="'+d+'" fill="none" stroke="'+adOff+'" stroke-width="1.3"/>'+
   (v?'<path class="go" pathLength="1" d="'+d+'" fill="none" stroke="'+adOn+'" stroke-width="2.2"'+tt(t)+'/>':'');
 // кран-транзистор: вертикальный рычажок длиной len, 1 — замкнут, 0 — отклонён
-const vSw=(x,y,v,t,len)=>{len=len||12;return '<circle cx="'+x+'" cy="'+y+'" r="1.6" fill="var(--muted)"/><circle cx="'+x+'" cy="'+(y+len)+'" r="1.6" fill="var(--muted)"/>'+
-  (v?'<line x1="'+x+'" y1="'+y+'" x2="'+x+'" y2="'+(y+len)+'" stroke="'+adOn+'" stroke-width="2" stroke-linecap="round" class="sw" style="--t:'+t+';transform-origin:'+x+'px '+y+'px"/>'
-    :'<line x1="'+x+'" y1="'+y+'" x2="'+x+'" y2="'+(y+len)+'" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" transform="rotate(-35 '+x+' '+y+')"/>')};
+const vSw=(x,y,v,t,len)=>{len=len||12;const c=(yy)=>'<circle cx="'+x+'" cy="'+yy+'" r="2.2" fill="'+(v?adOn:'var(--gate)')+'"'+(v?' class="litd"'+tt(t):'')+'/>';return c(y)+c(y+len)+
+  (v?'<line x1="'+x+'" y1="'+y+'" x2="'+x+'" y2="'+(y+len)+'" stroke="'+adOn+'" stroke-width="2.6" stroke-linecap="round" class="sw" style="--t:'+t+';transform-origin:'+x+'px '+y+'px"/>'
+    :'<line x1="'+x+'" y1="'+y+'" x2="'+x+'" y2="'+(y+len)+'" stroke="var(--gate)" stroke-width="2.6" stroke-linecap="round" transform="rotate(-35 '+x+' '+y+')"/>')};
 // клетка, которая «загорается» в момент t
 const vCell=(x,y,v,t)=>'<rect x="'+x+'" y="'+y+'" width="16" height="16" rx="4" fill="'+(v?adOn:'var(--sunk)')+'"'+(v?' class="lits"'+tt(t):'')+'/><text x="'+(x+8)+'" y="'+(y+12)+'" font-size="10" font-weight="700" text-anchor="middle" fill="'+(v?adInk:'var(--muted)')+'" class="pop"'+tt(t)+'>'+v+'</text>';
 const vBar=(x1,x2,y,h,v,t,txt)=>'<rect x="'+x1+'" y="'+y+'" width="'+(x2-x1)+'" height="'+h+'" rx="3" fill="var(--sunk)" stroke="'+(v?adOn:adOff)+'"'+(v?' class="lit"'+tt(t):'')+'/>'+adT((x1+x2)/2,y+h/2+2.5,txt,{a:'middle',s:7,c:v?'var(--fg)':'var(--muted)'});
@@ -266,14 +269,12 @@ function adAddSvg(a,b,bb,rows,c0,sub,sum){
     (v?'<path class="go" pathLength="1" d="'+d+'" fill="none" stroke="'+on+'" stroke-width="2.2"'+tt(t)+'/>':'');
   const dot=(x,y,v,t)=>'<circle cx="'+x+'" cy="'+y+'" r="2" fill="'+(v?on:off)+'"'+(v?' class="litd"'+tt(t):'')+'/>';
   // вентили «смотрят» вниз: входы сверху, выход снизу
-  const G=(k,cx,y,v,t)=>{const cl=v?' class="lit"'+tt(t):'',st=' fill="var(--surface)" stroke="'+(v?on:'var(--muted)')+'" stroke-width="1.4"'+cl;
+  const G=(k,cx,y,v,t)=>{const cl=v?' class="litg"'+tt(t):'',cl2=v?' class="lit"'+tt(t):'',st=' fill="'+(v?'var(--accent-soft)':'var(--surface)')+'" stroke="'+(v?on:'var(--gate)')+'" stroke-width="1.6"'+cl;
     const d=k==='and'?'M'+(cx-8)+','+y+'H'+(cx+8)+'V'+(y+6)+'A8,8 0 0 1 '+(cx-8)+','+(y+6)+'Z'
       :'M'+(cx-8)+','+y+'Q'+(cx-8)+','+(y+9)+' '+cx+','+(y+14)+'Q'+(cx+8)+','+(y+9)+' '+(cx+8)+','+y+'Q'+cx+','+(y+4)+' '+(cx-8)+','+y+'Z';
-    return '<path d="'+d+'"'+st+'/>'+(k==='xor'?'<path d="M'+(cx-8)+','+(y-3)+'Q'+cx+','+(y+1)+' '+(cx+8)+','+(y-3)+'" fill="none" stroke="'+(v?on:'var(--muted)')+'" stroke-width="1.4"'+cl+'/>':'')};
+    return '<path d="'+d+'"'+st+'/>'+(k==='xor'?'<path d="M'+(cx-8)+','+(y-3)+'Q'+cx+','+(y+1)+' '+(cx+8)+','+(y-3)+'" fill="none" stroke="'+(v?on:'var(--gate)')+'" stroke-width="1.6"'+cl2+'/>':'')};
   // кран-транзистор под цифрой: 1 — рычажок встаёт вертикально и замыкает, 0 — отклонён
-  const sw=(x,y,v,t)=>'<circle cx="'+x+'" cy="'+y+'" r="1.6" fill="var(--muted)"/><circle cx="'+x+'" cy="'+(y+12)+'" r="1.6" fill="var(--muted)"/>'+
-    (v?'<line x1="'+x+'" y1="'+y+'" x2="'+x+'" y2="'+(y+12)+'" stroke="'+on+'" stroke-width="2" stroke-linecap="round" class="sw" style="--t:'+t+';transform-origin:'+x+'px '+y+'px"/>'
-      :'<line x1="'+x+'" y1="'+y+'" x2="'+x+'" y2="'+(y+12)+'" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" transform="rotate(-35 '+x+' '+y+')"/>');
+  const sw=(x,y,v,t)=>vSw(x,y,v,t,12);
   const cellA=(x,y,v,t)=>'<rect x="'+x+'" y="'+y+'" width="16" height="16" rx="4" fill="'+(v?on:'var(--sunk)')+'"'+(v?' class="lits"'+tt(t):'')+'/><text x="'+(x+8)+'" y="'+(y+12)+'" font-size="10" font-weight="700" text-anchor="middle" fill="'+(v?adInk:'var(--muted)')+'" class="pop"'+tt(t)+'>'+v+'</text>';
   const L=(y,t,o)=>adT(2,y,t,Object.assign({s:7},o||{}));
   let sv='';
@@ -371,6 +372,13 @@ $('app').addEventListener('click',onTap);$('dock').addEventListener('click',onTa
 document.addEventListener('keydown',e=>{if(!$('help').hidden){if(e.key==='Escape')help(false);return}const m={'+':'+','-':'−','*':'×','/':'÷',Backspace:'⌫',Enter:'=','=':'=',Escape:'C',Delete:'C'}[e.key]||(/^\d$/.test(e.key)?e.key:null);
   if(m){e.preventDefault();press(m)}});
 const help=on=>{$('help').hidden=!on};
+// тема: авто (как в системе) → светлая → тёмная
+const THEMES=[['auto','◐ Авто'],['light','☀ Светлая'],['dark','☾ Тёмная']];
+let TH='auto';try{TH=localStorage.getItem('sm-theme')||'auto'}catch(e){}
+const setTheme=t=>{TH=t;const r=document.documentElement;if(t==='auto')r.removeAttribute('data-theme');else r.setAttribute('data-theme',t);
+  $('thm').textContent=THEMES.find(x=>x[0]===t)[1];try{localStorage.setItem('sm-theme',t)}catch(e){}};
+setTheme(TH);
+$('thm').onclick=()=>{const i=THEMES.findIndex(x=>x[0]===TH);setTheme(THEMES[(i+1)%3][0])};
 // вибрация 50 мс на каждое нажатие кнопки (Android; iPhone вибрацию из браузера не поддерживает)
 document.addEventListener('pointerdown',e=>{if(e.target.closest('button')&&navigator.vibrate)try{navigator.vibrate(50)}catch(_){}},{passive:true});
 $('helpx').onclick=()=>help(false);
