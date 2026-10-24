@@ -38,6 +38,19 @@
   --wire:#414C55; --gate:#6E7A84; --key:#2C343B; --keyfn:#3C464F; --dock:#111518;
   color-scheme:dark}
 
+/* ручной выбор темы в приложении — сильнее системной и темы просмотрщика */
+:root[data-sm="light"]{
+--bg:#F3F5F7; --surface:#FFFFFF; --sunk:#ECEFF2; --line:#E1E5E9; --fg:#12161C; --muted:#5B6470;
+  --accent:#0F6E64; --accent-ink:#FFFFFF; --accent-soft:#DCEFEB;
+  --bad:#B23A0A; --itv:#FF2E93;
+  --wire:#C3CBD2; --gate:#8A949D; --key:#FFFFFF; --keyfn:#DDE2E6; --dock:#E6EAEE;
+  color-scheme:light}
+:root[data-sm="dark"]{
+  --bg:#0F1316; --surface:#181D21; --sunk:#222930; --line:#2C343B; --fg:#E9EDF0; --muted:#9AA5AE;
+  --accent:#3FB8A8; --accent-ink:#06201C; --accent-soft:#1B3F3A; --bad:#F08A6A;
+  --wire:#414C55; --gate:#6E7A84; --key:#2C343B; --keyfn:#3C464F; --dock:#111518;
+  color-scheme:dark}
+
 /* iPhone: без зума от двойного тапа, без выделения долгим тапом */
 html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -52,7 +65,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px));
   display:flex;flex-direction:column;gap:10px}
 header{display:flex;align-items:center;gap:12px;padding:4px 2px 0}
-.thm{margin-left:auto;flex:none;min-width:44px;height:44px;border:0;border-radius:22px;background:var(--sunk);color:var(--fg);font-size:13px;font-weight:600;padding:0 12px;white-space:nowrap}
+.thm{margin-left:auto;flex:none;width:44px;height:44px;border:0;border-radius:50%;background:var(--sunk);color:var(--fg);font-size:20px;line-height:1}
 .ttl{display:flex;flex-direction:column;gap:2px}
 .ver{font-size:11px;color:var(--muted);letter-spacing:.03em}
 header h1{font:600 20px/1.1 var(--display);margin:0;letter-spacing:-.01em}
@@ -187,7 +200,7 @@ main>.card:last-child{flex:1}
   <p class="itv"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h12M9 4v16" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none"/><path d="M12 8l4.5 12L21 8" stroke="#FF2E93" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>itivan</p>
 </div></div>
 <script>
-const APP_VER='1.8.0';
+const APP_VER='1.8.1';
 document.getElementById('ver').textContent='v'+APP_VER;
 const $=id=>document.getElementById(id);
 let tT;function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(tT);tT=setTimeout(()=>e.classList.remove('show'),1800)}
@@ -372,13 +385,14 @@ $('app').addEventListener('click',onTap);$('dock').addEventListener('click',onTa
 document.addEventListener('keydown',e=>{if(!$('help').hidden){if(e.key==='Escape')help(false);return}const m={'+':'+','-':'−','*':'×','/':'÷',Backspace:'⌫',Enter:'=','=':'=',Escape:'C',Delete:'C'}[e.key]||(/^\d$/.test(e.key)?e.key:null);
   if(m){e.preventDefault();press(m)}});
 const help=on=>{$('help').hidden=!on};
-// тема: авто (как в системе) → светлая → тёмная
-const THEMES=[['auto','◐ Авто'],['light','☀ Светлая'],['dark','☾ Тёмная']];
-let TH='auto';try{TH=localStorage.getItem('sm-theme')||'auto'}catch(e){}
-const setTheme=t=>{TH=t;const r=document.documentElement;if(t==='auto')r.removeAttribute('data-theme');else r.setAttribute('data-theme',t);
-  $('thm').textContent=THEMES.find(x=>x[0]===t)[1];try{localStorage.setItem('sm-theme',t)}catch(e){}};
+// тема: два варианта — светлая и тёмная; при первом запуске — как в телефоне
+let TH=null;try{TH=localStorage.getItem('sm-theme')}catch(e){}
+if(TH!=='light'&&TH!=='dark')TH=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
+const setTheme=t=>{TH=t;document.documentElement.setAttribute('data-sm',t);
+  $('thm').textContent=t==='dark'?'☀':'☾';$('thm').setAttribute('aria-label',t==='dark'?'Светлая тема':'Тёмная тема');
+  try{localStorage.setItem('sm-theme',t)}catch(e){}};
 setTheme(TH);
-$('thm').onclick=()=>{const i=THEMES.findIndex(x=>x[0]===TH);setTheme(THEMES[(i+1)%3][0])};
+$('thm').onclick=()=>setTheme(TH==='dark'?'light':'dark');
 // вибрация 50 мс на каждое нажатие кнопки (Android; iPhone вибрацию из браузера не поддерживает)
 document.addEventListener('pointerdown',e=>{if(e.target.closest('button')&&navigator.vibrate)try{navigator.vibrate(50)}catch(_){}},{passive:true});
 $('helpx').onclick=()=>help(false);
