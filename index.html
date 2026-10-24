@@ -98,7 +98,7 @@ header p{margin:0;font-size:12px;color:var(--muted)}
 @keyframes rv{from{opacity:.12}to{opacity:1}}
 .sw{transform-box:view-box;animation:sw var(--st) ease-out calc(var(--t)*var(--st)) both}
 @keyframes sw{from{transform:rotate(-35deg);stroke:var(--muted)}to{transform:rotate(0);stroke:var(--accent)}}
-.static *{animation:none!important}
+.static *{animation:none!important}.static .go{stroke-dashoffset:0}
 .schbar{display:flex;justify-content:flex-end;gap:6px}
 .schbar button{border:0;background:var(--sunk);color:var(--muted);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:600}
 
@@ -120,7 +120,7 @@ header p{margin:0;font-size:12px;color:var(--muted)}
 footer{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--muted);padding:6px 2px 0}
 .itv{display:inline-flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-weight:600;letter-spacing:.04em}
 .itv svg{width:20px;height:20px}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}.scheme *{animation:none!important}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}.scheme *{animation:none!important}.scheme .go{stroke-dashoffset:0}}
 </style>
 </head>
 <body>
@@ -152,14 +152,14 @@ footer{display:flex;align-items:center;justify-content:space-between;font-size:1
   <h3>Минус</h3>
   <p>Та же схема: B переворачиваем (0↔1) и добавляем 1 в самый первый перенос справа.</p>
   <h3>Умножение</h3>
-  <p>Сдвиги и сложения. Где у B единичка, берём A и сдвигаем влево на столько клеток, какой это бит. Вентили И дают «A × один бит B», сумматоры копят строчки.</p>
+  <p>Сдвиги и сложения. Каждая цифра B управляет своим рядом кранов: единичка — краны замкнуты, и копия A, сдвинутая на столько клеток, какой это бит, идёт в сумматор. Нолик — краны разомкнуты, прибавлять нечего. Кран вместе с цифрой A — это и есть вентиль И.</p>
   <h3>Деление</h3>
-  <p>Вычитание много раз, как в столбик: сносим по одному биту A и пробуем вычесть B. Влезло — бит ответа 1, не влезло — 0.</p>
+  <p>Как в столбик: сносим по одной цифре A (она в пунктирной рамке) и пробуем вычесть B на схеме минуса. Влезло — кран справа замыкается и пишет 1 в ответ, не влезло — 0. Ответ читается справа сверху вниз.</p>
   <h3>Кнопки</h3>
   <p>«↻ ещё раз» — запустить анимацию заново. «Без анимации» — сразу показать готовую схему.</p>
 </div></div>
 <script>
-const APP_VER='1.3.0';
+const APP_VER='1.4.0';
 document.getElementById('ver').textContent='v'+APP_VER;
 const $=id=>document.getElementById(id);
 let tT;function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(tT);tT=setTimeout(()=>e.classList.remove('show'),1800)}
@@ -171,43 +171,65 @@ const adCell=(x,y,v,w)=>'<rect x="'+x+'" y="'+y+'" width="'+(w||16)+'" height="1
 const adT=(x,y,t,o)=>'<text x="'+x+'" y="'+y+'" font-size="'+((o&&o.s)||8)+'" '+(o&&o.a?'text-anchor="'+o.a+'" ':'')+(o&&o.b?'font-weight="700" ':'')+'fill="'+((o&&o.c)||'var(--muted)')+'">'+t+'</text>';
 const svgWrap=(h,sv)=>'<svg viewBox="0 0 360 '+h+'" role="img">'+sv+'</svg>';
 
-// умножение: вентили И делают «A × один бит B», сумматоры складывают сдвинутые строчки
+// общие кусочки для вертикальных схем
+const tt=t=>' style="--t:'+t+'"';
+const vW=(d,v,t)=>'<path d="'+d+'" fill="none" stroke="'+adOff+'" stroke-width="1.3"/>'+
+  (v?'<path class="go" pathLength="1" d="'+d+'" fill="none" stroke="'+adOn+'" stroke-width="2.2"'+tt(t)+'/>':'');
+// кран-транзистор: вертикальный рычажок длиной len, 1 — замкнут, 0 — отклонён
+const vSw=(x,y,v,t,len)=>{len=len||12;return '<circle cx="'+x+'" cy="'+y+'" r="1.6" fill="var(--muted)"/><circle cx="'+x+'" cy="'+(y+len)+'" r="1.6" fill="var(--muted)"/>'+
+  (v?'<line x1="'+x+'" y1="'+y+'" x2="'+x+'" y2="'+(y+len)+'" stroke="'+adOn+'" stroke-width="2" stroke-linecap="round" class="sw" style="--t:'+t+';transform-origin:'+x+'px '+y+'px"/>'
+    :'<line x1="'+x+'" y1="'+y+'" x2="'+x+'" y2="'+(y+len)+'" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" transform="rotate(-35 '+x+' '+y+')"/>')};
+// клетка, которая «загорается» в момент t
+const vCell=(x,y,v,t)=>'<rect x="'+x+'" y="'+y+'" width="16" height="16" rx="4" fill="'+(v?adOn:'var(--sunk)')+'"'+(v?' class="lits"'+tt(t):'')+'/><text x="'+(x+8)+'" y="'+(y+12)+'" font-size="10" font-weight="700" text-anchor="middle" fill="'+(v?adInk:'var(--muted)')+'" class="pop"'+tt(t)+'>'+v+'</text>';
+const vBar=(x1,x2,y,h,v,t,txt)=>'<rect x="'+x1+'" y="'+y+'" width="'+(x2-x1)+'" height="'+h+'" rx="3" fill="var(--sunk)" stroke="'+(v?adOn:adOff)+'"'+(v?' class="lit"'+tt(t):'')+'/>'+adT((x1+x2)/2,y+h/2+2.5,txt,{a:'middle',s:7,c:v?'var(--fg)':'var(--muted)'});
+
+// умножение: под каждую цифру B — ряд кранов. b=1 — краны замкнуты и копия A (сдвинутая) идёт в сумматор,
+// b=0 — краны разомкнуты, прибавлять нечего. Кран + цифра A = вентиль И
 function adMulSvg(a,b){
-  const cw=19,x0=360-16*cw,X=c=>x0+(15-c)*cw,H=62,bit=(v,i)=>(v>>i)&1;let y=8,sv='',acc=0;
-  sv+=adT(4,y+12,'A',{s:11,b:1});for(let i=0;i<8;i++)sv+=adCell(X(i)+1,y,bit(a,i));
-  sv+=adT(X(7)-4,y+12,'каждый бит A идёт на вентили И ↓',{a:'end',s:7});
-  y+=26;
-  for(let j=0;j<8;j++){const bj=bit(b,j),pp=bj?a<<j:0;
-    sv+='<g class="rv" style="--t:'+(j*3)+'">';
-    sv+=adT(4,y+12,'b'+j+'='+bj,{s:10,b:1,c:bj?adOn:'var(--muted)'});
-    for(let i=0;i<8;i++){const v=bit(a,i)&bj,x=X(i+j)+2;sv+='<path d="M'+x+','+y+'H'+(x+14)+'V'+(y+7)+'A7,7 0 0 1 '+x+','+(y+7)+'Z" fill="'+(v?adOn:'var(--surface)')+'" stroke="'+(v?adOn:'var(--muted)')+'" stroke-width="1.2"/>'+
-      '<line x1="'+(x+7)+'" x2="'+(x+7)+'" y1="'+(y+14)+'" y2="'+(y+20)+'" stroke="'+(v?adOn:adOff)+'" stroke-width="'+(v?2:1)+'"/>'}
-    if(j===0)sv+=adT(X(0)+20,y+9,'И',{a:'end',s:7});
-    acc+=pp;
+  const cw=21,X=c=>36+(15-c)*cw,H=72,bit=(v,i)=>(v>>i)&1;let sv='',acc=0;
+  sv+=adT(2,12,'A',{s:10,b:1,c:'var(--fg)'})+adT(34,12,a,{a:'end',s:8})+adT(2,32,'B',{s:10,b:1,c:'var(--fg)'})+adT(34,32,b,{a:'end',s:8});
+  for(let i=0;i<8;i++)sv+=adCell(X(i)+2.5,0,bit(a,i))+adCell(X(i)+2.5,20,bit(b,i));
+  sv+=adT(X(8)+cw,12,'каждая цифра B управляет рядом кранов ↓',{a:'end',s:7});
+  sv+='<line x1="0" x2="372" y1="42" y2="42" stroke="var(--line)" stroke-dasharray="2 4"/>';
+  for(let j=0;j<8;j++){const y=48+j*H,bj=bit(b,j),T=j*4;acc+=bj?a<<j:0;
+    // цифра B слева и её линия управления кранами
+    sv+=adT(10,y+16,'b'+j,{a:'middle',s:6})+adCell(2,y+19,bj);
+    sv+=vW('M18,'+(y+30)+'H'+(X(j)+cw),bj,T+1);
+    for(let i=0;i<8;i++){const c=i+j,xc=X(c)+10.5,ai=bit(a,i);
+      sv+=vCell(X(c)+2.5,y,ai,T)+vW('M'+xc+','+(y+16)+'V'+(y+20),ai,T+1)+vSw(xc,y+20,bj,T+1,10)+vW('M'+xc+','+(y+30)+'V'+(y+38),ai&bj,T+2);}
     const l=X(Math.min(15,j+7)),r=X(0)+cw;
-    sv+='<rect x="'+l+'" y="'+(y+20)+'" width="'+(r-l)+'" height="12" rx="3" fill="var(--sunk)" stroke="'+(bj?adOn:adOff)+'"/>'+adT((l+r)/2,y+29,bj?'сумматор: + A сдвинутое на '+j:'b'+j+'=0 — прибавлять нечего',{a:'middle',s:7,c:bj?'var(--fg)':'var(--muted)'});
-    for(let c=0;c<16;c++)if(c<=j+7||bit(acc,c))sv+=adCell(X(c)+1,y+36,bit(acc,c));
-    sv+=adT(x0-4,y+48,String(acc),{a:'end',s:9,b:1,c:'var(--fg)'});
-    sv+='</g>';y+=H}
-  return svgWrap(y+2,sv);
+    sv+=vBar(l,r,y+38,10,bj,T+3,bj?'сумматор: + A, сдвинутое на '+j:'краны закрыты — прибавлять нечего');
+    for(let c=0;c<16;c++)if(c<=j+7||bit(acc,c))sv+=vCell(X(c)+2.5,y+51,bit(acc,c),T+3);
+    sv+='<g class="pop"'+tt(T+3)+'>'+adT(34,y+63,String(acc),{a:'end',s:8,b:1,c:'var(--fg)'})+'</g>';
+    if(j<7)sv+='<line x1="0" x2="372" y1="'+(y+H-3)+'" y2="'+(y+H-3)+'" stroke="var(--line)" stroke-dasharray="2 4" opacity=".5"/>';
+  }
+  return '<svg viewBox="0 0 372 '+(48+8*H)+'" role="img">'+sv+'</svg>';
 }
-// деление «в столбик»: сносим бит A, пробуем вычесть B, влезло — пишем 1
+// деление в столбик: сношу цифру A, схема минуса пробует вычесть B. Влезло — кран замыкается и пишет 1 в ответ
 function adDivSvg(a,b){
-  const bit=(v,i)=>(v>>i)&1,H=54;let y=6,sv='',r=0;
-  sv+=adT(4,y+8,'B = '+b+' = '+b.toString(2),{s:9,b:1,c:'var(--fg)'})+adT(356,y+8,'бит ответа',{a:'end',s:8});y+=16;
-  for(let i=7;i>=0;i--){const ai=bit(a,i);r=(r<<1)|ai;const ok=r>=b,before=r;if(ok)r-=b;
-    sv+='<g class="rv" style="--t:'+((7-i)*3)+'">';
-    sv+=adT(4,y+9,'сношу a'+i+'='+ai,{s:9,b:1,c:ai?adOn:'var(--muted)'});
-    for(let k=0;k<9;k++){const c=8-k;sv+=adCell(4+k*17,y+14,bit(before,c))}
-    sv+=adT(4+9*17+2,y+26,'='+before,{s:9,c:'var(--fg)'});
-    sv+='<path d="M196,'+(y+22)+'H210" stroke="'+adOff+'" stroke-width="1.4"/><rect x="210" y="'+(y+12)+'" width="44" height="20" rx="5" fill="var(--sunk)" stroke="'+(ok?adOn:'var(--muted)')+'"/>'+adT(232,y+25,'− B',{a:'middle',s:10,b:1,c:'var(--fg)'});
-    sv+='<path d="M254,'+(y+22)+'H266" stroke="'+(ok?adOn:adOff)+'" stroke-width="'+(ok?2:1.4)+'"/>'+'<path d="M282,'+(y+10)+'L294,'+(y+22)+'L282,'+(y+34)+'L270,'+(y+22)+'Z" transform="translate(-4,0)" fill="'+(ok?adOn:'var(--surface)')+'" stroke="'+(ok?adOn:'var(--muted)')+'"/>'+adT(278,y+25,'≥0',{a:'middle',s:7,b:1,c:ok?adInk:'var(--muted)'});
-    sv+='<path d="M290,'+(y+22)+'H322" stroke="'+(ok?adOn:adOff)+'" stroke-width="'+(ok?2:1.4)+'"/>'+'<circle cx="336" cy="'+(y+22)+'" r="11" fill="'+(ok?adOn:'var(--sunk)')+'"/>'+adT(336,y+26,ok?'1':'0',{a:'middle',s:12,b:1,c:ok?adInk:'var(--muted)'});
-    sv+=adT(232,y+44,ok?'влезло — вычитаю, остаток '+r:'не влезло — оставляю как было',{a:'middle',s:7,c:ok?adOn:'var(--muted)'});
-    sv+='</g>';
-    if(i)sv+='<line x1="0" x2="360" y1="'+(y+H-3)+'" y2="'+(y+H-3)+'" stroke="var(--line)" stroke-dasharray="2 4" opacity=".5"/>';
-    y+=H}
-  return svgWrap(y+2,sv);
+  const cw=32,X=c=>36+(8-c)*cw,H=66,bit=(v,i)=>(v>>i)&1,qx=344;let sv='',r=0;
+  sv+=adT(2,12,'A',{s:10,b:1,c:'var(--fg)'})+adT(34,12,a,{a:'end',s:8})+adT(2,32,'B',{s:10,b:1,c:'var(--fg)'})+adT(34,32,b,{a:'end',s:8});
+  for(let i=0;i<8;i++)sv+=adCell(X(i)+8,0,bit(a,i))+adCell(X(i)+8,20,bit(b,i));
+  sv+=adT(qx,32,'ответ',{a:'middle',s:7});
+  sv+='<line x1="0" x2="372" y1="42" y2="42" stroke="var(--line)" stroke-dasharray="2 4"/>';
+  for(let k=0;k<8;k++){const i=7-k,ai=bit(a,i),y=48+k*H,T=k*4;r=(r<<1)|ai;const ok=r>=b,before=r;if(ok)r-=b;
+    sv+=adT(2,y+12,'сношу',{s:6})+adT(2,y+21,'a'+i+'='+ai,{s:8,b:1,c:ai?adOn:'var(--muted)'});
+    for(let c=8;c>=0;c--)sv+=vCell(X(c)+8,y,bit(before,c),T);
+    sv+='<rect x="'+(X(0)+7)+'" y="'+(y-1)+'" width="18" height="18" rx="5" fill="none" stroke="var(--accent)" stroke-dasharray="2 2"/>';
+    sv+=vBar(X(8)+8,X(0)+24,y+22,12,ok,T+1,ok?before+' − '+b+' = '+(before-b)+' — влезло, остаток '+r:before+' − '+b+' меньше нуля — не влезло, оставляю '+r);
+    // сигнал «≥ 0?» идёт к крану ответа
+    sv+=vW('M'+(X(0)+24)+','+(y+28)+'H'+qx+'V'+(y+32),ok,T+2)+vSw(qx,y+32,ok,T+2,10)+vW('M'+qx+','+(y+42)+'V'+(y+46),ok,T+3);
+    sv+=vCell(qx-8,y+46,ok?1:0,T+3);
+    if(k<7)sv+='<line x1="0" x2="372" y1="'+(y+H-3)+'" y2="'+(y+H-3)+'" stroke="var(--line)" stroke-dasharray="2 4" opacity=".5"/>';
+  }
+  const y=48+8*H,q=Math.floor(a/b),T=32;
+  sv+='<line x1="0" x2="372" y1="'+(y-3)+'" y2="'+(y-3)+'" stroke="var(--line)"/>';
+  sv+=adT(2,y+12,'=',{s:11,b:1,c:'var(--fg)'})+adT(34,y+12,q,{a:'end',s:8,b:1,c:'var(--fg)'});
+  for(let i=0;i<8;i++)sv+=vCell(X(i)+8,y,bit(q,i),T);
+  sv+=adT(2,y+32,'ост.',{s:7})+adT(34,y+32,a%b,{a:'end',s:8,b:1,c:'var(--fg)'});
+  for(let i=0;i<8;i++)sv+=vCell(X(i)+8,y+20,bit(a%b,i),T);
+  sv+='<g class="pop"'+tt(T)+'>'+adT(qx,y+12,'↑',{a:'middle',s:10,c:'var(--muted)'})+adT(qx,y+24,'читай',{a:'middle',s:6})+adT(qx,y+31,'сверху',{a:'middle',s:6})+'</g>';
+  return '<svg viewBox="0 0 372 '+(y+40)+'" role="img">'+sv+'</svg>';
 }
 // сложение / вычитание: вертикальная схема. Сверху — нули и единицы A и B,
 // под каждой цифрой кран-транзистор, ниже вентили, внизу — ответ. Перенос бежит справа налево.
@@ -287,16 +309,10 @@ function draw(){
     scheme=adAddSvg(a,b,bb,rows,c0,sub,sum)+(sub&&res<0?'<div class="sub">Минус компьютер записывает хитро: '+(sum&255)+' = 256 − '+(-res)+'. Так он понимает, что это −'+(-res)+'.</div>':'');
     bin='';
   }else if(op==='×'){
-    bin+='<div class="adr sum"><span>=</span><b class="num">'+res+'</b></div>';
-    void('<div class="adleg"><div><b>Умножение</b> — это сдвиги и сложения. Где у B стоит единичка, берём A и сдвигаем влево на столько клеток, какой это бит. Потом всё складываем на тех же сумматорах.</div>'+
-      '<div><b>И</b> — «обе единички?»: так получаем A × один бит B. Каждая следующая строчка сдвинута на клетку влево.</div><div><b>Сумматор</b> — та же схема, что у плюса: копит строчки. Внизу — ответ.</div></div>');
-    scheme=adMulSvg(a,b);
+    bin='';scheme=adMulSvg(a,b);
   }else{
-    void('<div class="adleg"><div><b>Деление</b> — это вычитание много раз: сколько раз B влезает в A. '+(b?'Здесь '+b+' влезло '+res+' раз, осталось '+rem+'.':'На ноль делить нельзя — сколько ни вычитай ноль, ничего не убудет.')+'</div>'+
-      (b?'<div>Как в столбик: сношу по одному биту A сверху вниз и пробую вычесть B на схеме минуса. Влезло — бит ответа 1, не влезло — 0. Ответ читается по кружкам сверху вниз.</div>':'')+'</div>');
     if(!b)bin+='<div class="sub">На ноль делить нельзя — сколько ни вычитай ноль, ничего не убудет.</div>';
-    if(b){bin+='<div class="adr sum"><span>=</span><b class="num">'+res+'</b>'+bits(res)+'</div>'+(rem?'<div class="adr"><span style="width:auto;font-size:12px">остаток</span><b class="num">'+rem+'</b>'+bits(rem)+'</div>':'');
-      scheme=adDivSvg(a,b)}
+    else{bin='';scheme=adDivSvg(a,b)}
   }
 
   $('app').innerHTML=
