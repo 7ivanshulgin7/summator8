@@ -65,6 +65,9 @@ header p{margin:0;font-size:12px;color:var(--muted)}
 .adkeys button:active{transform:scale(.96)}
 .adkeys .op{background:var(--accent-soft);color:var(--accent)}
 .adkeys .op.sel{background:var(--accent);color:var(--accent-ink)}
+.adkeys .w2{grid-column:span 2}
+.adkeys .fn{background:var(--line);color:var(--fg)}
+.adkeys .eq{background:var(--accent);color:var(--accent-ink)}
 
 /* двоичный вид */
 .card{background:var(--surface);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:6px}
@@ -159,7 +162,7 @@ footer{display:flex;align-items:center;justify-content:space-between;font-size:1
   <p>«↻ ещё раз» — запустить анимацию заново. «Без анимации» — сразу показать готовую схему.</p>
 </div></div>
 <script>
-const APP_VER='1.4.0';
+const APP_VER='1.5.0';
 document.getElementById('ver').textContent='v'+APP_VER;
 const $=id=>document.getElementById(id);
 let tT;function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(tT);tT=setTimeout(()=>e.classList.remove('show'),1800)}
@@ -317,11 +320,14 @@ function draw(){
 
   $('app').innerHTML=
     '<section class="adcalc"><div class="addisp num"><span data-f="a"'+(ADD.f==='a'?' class="cur"':'')+'>'+a+'</span> '+op+' <span data-f="b"'+(ADD.f==='b'?' class="cur"':'')+'>'+b+'</span> = <b>'+(res==null?'<small>на 0 нельзя</small>':neg(res)+(rem?' <small>ост. '+rem+'</small>':''))+'</b></div>'+
-      '<div class="adkeys">'+['7','8','9','C','4','5','6','÷','1','2','3','×','⌫','0','−','+'].map(k=>'<button data-ak="'+k+'"'+(/\d/.test(k)?'':' class="op'+(k===op?' sel':'')+'"')+' aria-label="'+({'⌫':'Стереть','C':'Сброс'}[k]||k)+'">'+k+'</button>').join('')+'</div></section>'+
+      '<div class="adkeys">'+KEYS.map(([k,c])=>'<button data-ak="'+k+'" class="'+(c||'')+(k===op?' sel':'')+'" aria-label="'+({'⌫':'Стереть','C':'Сброс','=':'Показать схему'}[k]||k)+'">'+k+'</button>').join('')+'</div></section>'+
     (bin?'<section class="card">'+bin+'</section>':'')+
     (scheme?'<section class="scheme'+(ANIM?'':' static')+'" style="display:flex;flex-direction:column;gap:6px"><div class="schbar">'+(ANIM?'<button data-replay>↻ ещё раз</button>':'')+'<button data-anim>'+(ANIM?'⏸ без анимации':'▶ анимация')+'</button></div>'+scheme+'</section>':'');
 }
+// классическая раскладка: C ⌫ ÷ / 7 8 9 × / 4 5 6 − / 1 2 3 + / 0 =
+const KEYS=[['C','fn w2'],['⌫','fn'],['÷','op'],['7'],['8'],['9'],['×','op'],['4'],['5'],['6'],['−','op'],['1'],['2'],['3'],['+','op'],['0','w2'],['=','eq w2']];
 function press(k){const f=ADD.f;
+  if(k==='='){draw();const sc=document.querySelector('.scheme');if(sc)sc.scrollIntoView({behavior:'smooth',block:'start'});return}
   if(/\d/.test(k)){const v=ADD[f]*10+ +k;if(v>255){toast('Сумматор 8-битный: числа до 255');return}ADD[f]=v}
   else if(k==='⌫')ADD[f]=Math.floor(ADD[f]/10);
   else if('+−×÷'.includes(k)){ADD.op=k;ADD.f='b'}
@@ -331,9 +337,11 @@ $('app').addEventListener('click',e=>{const k=e.target.closest('[data-ak]');if(k
   if(e.target.closest('[data-anim]')){ANIM=!ANIM;try{localStorage.setItem('sm-anim',ANIM?'1':'0')}catch(_){}return draw()}
   if(e.target.closest('[data-replay]')){const sc=document.querySelector('.scheme svg');if(sc){const n=sc.cloneNode(true);sc.replaceWith(n)}return}
   const f=e.target.closest('[data-f]');if(f){ADD.f=f.dataset.f;draw()}});
-document.addEventListener('keydown',e=>{if(!$('help').hidden){if(e.key==='Escape')help(false);return}const m={'+':'+','-':'−','*':'×','/':'÷',Backspace:'⌫',Escape:'C',Delete:'C'}[e.key]||(/^\d$/.test(e.key)?e.key:null);
+document.addEventListener('keydown',e=>{if(!$('help').hidden){if(e.key==='Escape')help(false);return}const m={'+':'+','-':'−','*':'×','/':'÷',Backspace:'⌫',Enter:'=','=':'=',Escape:'C',Delete:'C'}[e.key]||(/^\d$/.test(e.key)?e.key:null);
   if(m){e.preventDefault();press(m)}});
 const help=on=>{$('help').hidden=!on};
+// вибрация 50 мс на каждое нажатие кнопки (Android; iPhone вибрацию из браузера не поддерживает)
+document.addEventListener('pointerdown',e=>{if(e.target.closest('button')&&navigator.vibrate)try{navigator.vibrate(50)}catch(_){}},{passive:true});
 $('helpbtn').onclick=()=>help(true);$('helpx').onclick=()=>help(false);
 $('help').addEventListener('click',e=>{if(e.target.id==='help')help(false)});
 draw();
