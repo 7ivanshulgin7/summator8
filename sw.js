@@ -1,5 +1,5 @@
 // Версию поднимать вместе с APP_VER в index.html
-const VER='summator-v1.7.1';
+const VER='summator-v1.7.2';
 const FILES=['./','index.html','manifest.json','icon-180.png','icon-192.png','icon-512.png'];
 
 self.addEventListener('install',e=>{

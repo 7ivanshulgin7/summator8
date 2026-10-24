@@ -23,16 +23,19 @@
   --bg:#F3F5F7; --surface:#FFFFFF; --sunk:#ECEFF2; --line:#E1E5E9; --fg:#12161C; --muted:#5B6470;
   --accent:#0F6E64; --accent-ink:#FFFFFF; --accent-soft:#DCEFEB;
   --bad:#B23A0A; --itv:#FF2E93;
+  --wire:#C3CBD2; --key:#FFFFFF; --keyfn:#DDE2E6; --dock:#E6EAEE;
   --display:"Unbounded","Golos Text",system-ui,sans-serif; --body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   color-scheme:light;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0F1316; --surface:#181D21; --sunk:#222930; --line:#2C343B; --fg:#E9EDF0; --muted:#9AA5AE;
-  --accent:#3FB8A8; --accent-ink:#06201C; --accent-soft:#173632; --bad:#F08A6A;
+  --accent:#3FB8A8; --accent-ink:#06201C; --accent-soft:#1B3F3A; --bad:#F08A6A;
+  --wire:#4E5A64; --key:#2C343B; --keyfn:#3C464F; --dock:#111518;
   color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0F1316; --surface:#181D21; --sunk:#222930; --line:#2C343B; --fg:#E9EDF0; --muted:#9AA5AE;
-  --accent:#3FB8A8; --accent-ink:#06201C; --accent-soft:#173632; --bad:#F08A6A;
+  --accent:#3FB8A8; --accent-ink:#06201C; --accent-soft:#1B3F3A; --bad:#F08A6A;
+  --wire:#4E5A64; --key:#2C343B; --keyfn:#3C464F; --dock:#111518;
   color-scheme:dark}
 
 /* iPhone: без зума от двойного тапа, без выделения долгим тапом */
@@ -59,13 +62,13 @@ header p{margin:0;font-size:13px;color:var(--muted)}
 /* калькулятор */
 .adcalc{display:flex;flex-direction:column;gap:6px}
 /* нижняя панель под большой палец: дисплей, инструменты и клавиши — в нижней половине экрана */
-#dock{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--sunk);border-radius:22px 22px 0 0;box-shadow:0 -6px 24px rgba(10,20,20,.12);
+#dock{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--dock);border-top:1px solid var(--line);border-radius:22px 22px 0 0;box-shadow:0 -6px 24px rgba(10,20,20,.12);
   padding-block:8px calc(8px + env(safe-area-inset-bottom,0px));padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
 .dockin{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:6px}
 #dock.min .adkeys{display:none}
 .tools{display:flex;gap:6px;align-items:center}
 .tools .grow{flex:1}
-.tbtn{min-height:44px;min-width:44px;border:0;border-radius:14px;background:var(--surface);color:var(--fg);font-size:15px;font-weight:600;padding:0 12px}
+.tbtn{min-height:44px;min-width:44px;border:0;border-radius:14px;background:var(--key);color:var(--fg);font-size:15px;font-weight:600;padding:0 12px}
 .tbtn.round{border-radius:50%;padding:0;font-size:18px;color:var(--accent);background:var(--accent-soft)}
 .tbtn[aria-pressed=true]{background:var(--accent-soft);color:var(--accent)}
 .tbtn[aria-pressed=false]{color:var(--muted)}
@@ -75,12 +78,12 @@ header p{margin:0;font-size:13px;color:var(--muted)}
 .addisp .cur{color:var(--fg);border-bottom-color:var(--accent)}
 .addisp b{color:var(--fg)}.addisp small{font-size:17px;color:var(--muted)}
 .adkeys{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.adkeys button{height:50px;border:0;border-radius:16px;background:var(--surface);color:var(--fg);font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;font-size:24px;font-weight:500}
+.adkeys button{height:50px;border:0;border-radius:16px;background:var(--key);color:var(--fg);font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;font-size:24px;font-weight:500}
 .adkeys button:active{transform:scale(.96)}
 .adkeys .op{background:var(--accent-soft);color:var(--accent)}
 .adkeys .op.sel{background:var(--accent);color:var(--accent-ink)}
 .adkeys .w2{grid-column:span 2}
-.adkeys .fn{background:var(--line);color:var(--fg)}
+.adkeys .fn{background:var(--keyfn);color:var(--fg)}
 .adkeys .eq{background:var(--accent);color:var(--accent-ink)}
 
 /* двоичный вид */
@@ -107,7 +110,7 @@ main>.card:last-child{flex:1}
 .lit{animation:lit var(--st) linear calc(var(--t)*var(--st)) both}
 @keyframes lit{from{stroke:var(--muted)}to{stroke:var(--accent)}}
 .litd{animation:litd var(--st) linear calc(var(--t)*var(--st)) both}
-@keyframes litd{from{fill:var(--line)}to{fill:var(--accent)}}
+@keyframes litd{from{fill:var(--wire)}to{fill:var(--accent)}}
 .lits{animation:lits var(--st) linear calc(var(--t)*var(--st)) both}
 @keyframes lits{from{fill:var(--sunk)}to{fill:var(--accent)}}
 .pop{animation:pop var(--st) linear calc(var(--t)*var(--st)) both}
@@ -181,7 +184,7 @@ main>.card:last-child{flex:1}
   <p class="itv"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h12M9 4v16" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none"/><path d="M12 8l4.5 12L21 8" stroke="#FF2E93" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>itivan</p>
 </div></div>
 <script>
-const APP_VER='1.7.1';
+const APP_VER='1.7.2';
 document.getElementById('ver').textContent='v'+APP_VER;
 const $=id=>document.getElementById(id);
 let tT;function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(tT);tT=setTimeout(()=>e.classList.remove('show'),1800)}
@@ -189,7 +192,7 @@ let tT;function toast(t){const e=$('toast');e.textContent=t;e.classList.add('sho
 let ADD={a:0,b:0,f:'a',op:'+'};
 let ANIM=true;try{ANIM=localStorage.getItem('sm-anim')!=='0'}catch(e){}
 let MIN=false;try{MIN=localStorage.getItem('sm-min')==='1'}catch(e){}
-const adOn='var(--accent)',adOff='var(--line)',adInk='var(--accent-ink)';
+const adOn='var(--accent)',adOff='var(--wire)',adInk='var(--accent-ink)';
 const adCell=(x,y,v,w)=>'<rect x="'+x+'" y="'+y+'" width="'+(w||16)+'" height="16" rx="4" fill="'+(v?adOn:'var(--sunk)')+'"/><text x="'+(x+(w||16)/2)+'" y="'+(y+12)+'" font-size="10" font-weight="700" text-anchor="middle" fill="'+(v?adInk:'var(--muted)')+'">'+v+'</text>';
 const adT=(x,y,t,o)=>'<text x="'+x+'" y="'+y+'" font-size="'+Math.max((o&&o.s)||8,8)+'" '+(o&&o.a?'text-anchor="'+o.a+'" ':'')+(o&&o.b?'font-weight="700" ':'')+'fill="'+((o&&o.c)||'var(--muted)')+'">'+t+'</text>';
 const svgWrap=(h,sv)=>'<svg viewBox="0 0 360 '+h+'" role="img">'+sv+'</svg>';
