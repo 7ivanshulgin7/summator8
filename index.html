@@ -51,17 +51,17 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 header{display:flex;align-items:baseline;gap:10px;padding:4px 2px 0}
 header h1{font:600 20px/1.1 var(--display);margin:0;letter-spacing:-.01em}
 header h1 i{font-style:normal;color:var(--accent)}
-header p{margin:0;font-size:12px;color:var(--muted)}
+header p{margin:0;font-size:13px;color:var(--muted)}
 .num{font-variant-numeric:tabular-nums}
 
 /* калькулятор */
 .adcalc{background:var(--sunk);border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:8px}
-.addisp{font-size:26px;text-align:right;padding:4px 6px;color:var(--muted);min-height:40px}
+.addisp{font-size:36px;line-height:1.15;text-align:right;padding:6px 8px 2px;color:var(--muted);min-height:52px;overflow-wrap:anywhere}
 .addisp span{padding:0 2px;border-bottom:2px solid transparent;cursor:pointer}
 .addisp .cur{color:var(--fg);border-bottom-color:var(--accent)}
-.addisp b{color:var(--fg)}.addisp small{font-size:15px;color:var(--muted)}
+.addisp b{color:var(--fg)}.addisp small{font-size:17px;color:var(--muted)}
 .adkeys{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.adkeys button{height:48px;border:0;border-radius:11px;background:var(--surface);color:var(--fg);font-size:20px;font-weight:600}
+.adkeys button{height:56px;border:0;border-radius:16px;background:var(--surface);color:var(--fg);font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;font-size:24px;font-weight:500}
 .adkeys button:active{transform:scale(.96)}
 .adkeys .op{background:var(--accent-soft);color:var(--accent)}
 .adkeys .op.sel{background:var(--accent);color:var(--accent-ink)}
@@ -71,7 +71,7 @@ header p{margin:0;font-size:12px;color:var(--muted)}
 
 /* двоичный вид */
 .card{background:var(--surface);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:6px}
-.sub{font-size:12px;color:var(--muted)}
+.sub{font-size:14px;color:var(--muted)}
 .adr{display:flex;align-items:center;gap:8px}
 .adr>span{width:14px;font-weight:700;color:var(--muted)}
 .adr>b{width:40px;text-align:right}
@@ -103,17 +103,18 @@ header p{margin:0;font-size:12px;color:var(--muted)}
 @keyframes sw{from{transform:rotate(-35deg);stroke:var(--muted)}to{transform:rotate(0);stroke:var(--accent)}}
 .static *{animation:none!important}.static .go{stroke-dashoffset:0}
 .schbar{display:flex;justify-content:flex-end;gap:6px}
-.schbar button{border:0;background:var(--sunk);color:var(--muted);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:600}
+.schbar button{border:0;background:var(--sunk);color:var(--fg);border-radius:12px;min-height:44px;padding:0 14px;font-size:15px;font-weight:600}
 
 /* инструкция */
-.helpbtn{margin-left:auto;align-self:center;width:32px;height:32px;flex:none;border:0;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:17px;font-weight:700}
+.helpbtn{margin-left:auto;align-self:center;width:44px;height:44px;flex:none;border:0;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:17px;font-weight:700}
 #help[hidden]{display:none!important}
 #help{position:fixed;inset:0;z-index:30;background:rgba(10,14,16,.45);display:flex;align-items:flex-end;justify-content:center}
 .helpbox{background:var(--surface);color:var(--fg);width:100%;max-width:520px;max-height:85%;overflow:auto;border-radius:18px 18px 0 0;
   padding-block:14px calc(18px + env(safe-area-inset-bottom,0px));padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px));font-size:14px}
 .helphead{display:flex;align-items:center;justify-content:space-between;font-size:17px;position:sticky;top:-14px;background:var(--surface);padding-block:4px}
-.helphead button{border:0;background:var(--sunk);color:var(--muted);width:32px;height:32px;border-radius:50%}
-.helpbox h3{font-size:14px;margin:14px 0 4px;color:var(--accent)}.helpbox p{margin:0 0 6px;color:var(--muted);line-height:1.45}.helpbox p b{color:var(--fg)}
+.helphead button{border:0;background:var(--sunk);color:var(--muted);width:44px;height:44px;border-radius:50%;font-size:17px}
+.grab{width:36px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 6px}
+.helpbox h3{font-size:17px;margin:14px 0 4px;color:var(--accent)}.helpbox p{margin:0 0 8px;color:var(--muted);line-height:1.5;font-size:16px}.helpbox p b{color:var(--fg)}
 /* тост */
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;
   background:var(--fg);color:var(--bg);padding:9px 14px;border-radius:12px;font-size:13px;pointer-events:none;transition:.2s;max-width:calc(100% - 32px)}
@@ -138,7 +139,7 @@ footer{display:flex;align-items:center;justify-content:space-between;font-size:1
   </footer>
 </div>
 <div id="toast" role="status"></div>
-<div id="help" hidden><div class="helpbox" role="dialog" aria-modal="true" aria-labelledby="helpttl">
+<div id="help" hidden><div class="helpbox" role="dialog" aria-modal="true" aria-labelledby="helpttl"><div class="grab" aria-hidden="true"></div>
   <div class="helphead"><b id="helpttl">Как это работает</b><button id="helpx" aria-label="Закрыть">✕</button></div>
   <p>Компьютер не знает цифр от 2 до 9. Он умеет только <b>0</b> и <b>1</b>: «тока нет» и «ток есть». Посмотрим, как он с этим считает!</p>
   <p>Смотри сверху вниз: <b>калькулятор</b> → твои числа <b>ноликами и единичками</b> → <b>краны и вентили</b>, которые считают.</p>
@@ -166,11 +167,11 @@ footer{display:flex;align-items:center;justify-content:space-between;font-size:1
   <p>Как в столбик: берём по одной цифре A (она в пунктирной рамке) и пробуем отнять B.</p>
   <p>Получилось — справа кран открывается и пишет 1 в ответ. Не получилось — пишем 0. Ответ читается справа сверху вниз.</p>
   <h3>👆 Кнопки</h3>
-  <p><b>=</b> или <b>↻ ещё раз</b> — посмотреть, как бежит ток, с самого начала. <b>Без анимации</b> — сразу показать готовую схему.</p>
+  <p><b>=</b> или <b>▶ показать по шагам</b> — посмотреть, как бежит ток, с самого начала. <b>Без анимации</b> — схема всегда сразу готовая.</p>
   <p>Нажми на число в окошке калькулятора, чтобы его поменять. Числа — от 0 до 255: больше в 8 клеток не помещается.</p>
 </div></div>
 <script>
-const APP_VER='1.5.1';
+const APP_VER='1.6.0';
 document.getElementById('ver').textContent='v'+APP_VER;
 const $=id=>document.getElementById(id);
 let tT;function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(tT);tT=setTimeout(()=>e.classList.remove('show'),1800)}
@@ -179,7 +180,7 @@ let ADD={a:0,b:0,f:'a',op:'+'};
 let ANIM=true;try{ANIM=localStorage.getItem('sm-anim')!=='0'}catch(e){}
 const adOn='var(--accent)',adOff='var(--line)',adInk='var(--accent-ink)';
 const adCell=(x,y,v,w)=>'<rect x="'+x+'" y="'+y+'" width="'+(w||16)+'" height="16" rx="4" fill="'+(v?adOn:'var(--sunk)')+'"/><text x="'+(x+(w||16)/2)+'" y="'+(y+12)+'" font-size="10" font-weight="700" text-anchor="middle" fill="'+(v?adInk:'var(--muted)')+'">'+v+'</text>';
-const adT=(x,y,t,o)=>'<text x="'+x+'" y="'+y+'" font-size="'+((o&&o.s)||8)+'" '+(o&&o.a?'text-anchor="'+o.a+'" ':'')+(o&&o.b?'font-weight="700" ':'')+'fill="'+((o&&o.c)||'var(--muted)')+'">'+t+'</text>';
+const adT=(x,y,t,o)=>'<text x="'+x+'" y="'+y+'" font-size="'+Math.max((o&&o.s)||8,8)+'" '+(o&&o.a?'text-anchor="'+o.a+'" ':'')+(o&&o.b?'font-weight="700" ':'')+'fill="'+((o&&o.c)||'var(--muted)')+'">'+t+'</text>';
 const svgWrap=(h,sv)=>'<svg viewBox="0 0 360 '+h+'" role="img">'+sv+'</svg>';
 
 // общие кусочки для вертикальных схем
@@ -200,7 +201,7 @@ function adMulSvg(a,b){
   const cw=21,X=c=>36+(15-c)*cw,H=72,bit=(v,i)=>(v>>i)&1;let sv='',acc=0;
   sv+=adT(2,12,'A',{s:10,b:1,c:'var(--fg)'})+adT(34,12,a,{a:'end',s:8})+adT(2,32,'B',{s:10,b:1,c:'var(--fg)'})+adT(34,32,b,{a:'end',s:8});
   for(let i=0;i<8;i++)sv+=adCell(X(i)+2.5,0,bit(a,i))+adCell(X(i)+2.5,20,bit(b,i));
-  sv+=adT(X(8)+cw,12,'каждая цифра B управляет рядом кранов ↓',{a:'end',s:7});
+  sv+=adT(X(8)+cw,12,'цифры B управляют кранами ↓',{a:'end',s:7});
   sv+='<line x1="0" x2="372" y1="42" y2="42" stroke="var(--line)" stroke-dasharray="2 4"/>';
   for(let j=0;j<8;j++){const y=48+j*H,bj=bit(b,j),T=j*4;acc+=bj?a<<j:0;
     // цифра B слева и её линия управления кранами
@@ -300,7 +301,7 @@ function adAddSvg(a,b,bb,rows,c0,sub,sum){
   return '<svg viewBox="0 0 372 '+Y(210)+'" role="img">'+sv+'</svg>';
 }
 
-function draw(){
+function draw(play){
   const N=8,bit=(v,i)=>(v>>i)&1;
   const a=ADD.a&255,b=ADD.b&255,op=ADD.op,sub=op==='−',bb=sub?(~b)&255:b,c0=sub?1:0;let c=c0;const rows=[];
   for(let i=0;i<N;i++){const A=bit(a,i),B=bit(bb,i),s1=A^B,c1=A&B,S=s1^c,c2=s1&c,co=c1|c2;rows.push({A,B,cin:c,s1,c1,c2,S,co});c=co}
@@ -330,20 +331,20 @@ function draw(){
     '<section class="adcalc"><div class="addisp num"><span data-f="a"'+(ADD.f==='a'?' class="cur"':'')+'>'+a+'</span> '+op+' <span data-f="b"'+(ADD.f==='b'?' class="cur"':'')+'>'+b+'</span> = <b>'+(res==null?'<small>на 0 нельзя</small>':neg(res)+(rem?' <small>ост. '+rem+'</small>':''))+'</b></div>'+
       '<div class="adkeys">'+KEYS.map(([k,c])=>'<button data-ak="'+k+'" class="'+(c||'')+(k===op?' sel':'')+'" aria-label="'+({'⌫':'Стереть','C':'Сброс','=':'Показать схему'}[k]||k)+'">'+k+'</button>').join('')+'</div></section>'+
     (bin?'<section class="card">'+bin+'</section>':'')+
-    (scheme?'<section class="scheme'+(ANIM?'':' static')+'" style="display:flex;flex-direction:column;gap:6px"><div class="schbar">'+(ANIM?'<button data-replay>↻ ещё раз</button>':'')+'<button data-anim>'+(ANIM?'⏸ без анимации':'▶ анимация')+'</button></div>'+scheme+'</section>':'');
+    (scheme?'<section class="scheme'+(ANIM&&play?'':' static')+'" style="display:flex;flex-direction:column;gap:6px"><div class="schbar">'+(ANIM?'<button data-replay>▶ показать по шагам</button>':'')+'<button data-anim>'+(ANIM?'Без анимации':'Анимация')+'</button></div>'+scheme+'</section>':'');
 }
 // классическая раскладка: C ⌫ ÷ / 7 8 9 × / 4 5 6 − / 1 2 3 + / 0 =
 const KEYS=[['C','fn w2'],['⌫','fn'],['÷','op'],['7'],['8'],['9'],['×','op'],['4'],['5'],['6'],['−','op'],['1'],['2'],['3'],['+','op'],['0','w2'],['=','eq w2']];
 function press(k){const f=ADD.f;
-  if(k==='='){draw();const sc=document.querySelector('.scheme');if(sc)sc.scrollIntoView({behavior:'smooth',block:'start'});return}
+  if(k==='='){draw(true);const sc=document.querySelector('.scheme');if(sc)sc.scrollIntoView({behavior:'smooth',block:'start'});return}
   if(/\d/.test(k)){const v=ADD[f]*10+ +k;if(v>255){toast('Сумматор 8-битный: числа до 255');return}ADD[f]=v}
   else if(k==='⌫')ADD[f]=Math.floor(ADD[f]/10);
   else if('+−×÷'.includes(k)){ADD.op=k;ADD.f='b'}
   else if(k==='C'){ADD={a:0,b:0,f:'a',op:'+'}}
   draw()}
 $('app').addEventListener('click',e=>{const k=e.target.closest('[data-ak]');if(k)return press(k.dataset.ak);
-  if(e.target.closest('[data-anim]')){ANIM=!ANIM;try{localStorage.setItem('sm-anim',ANIM?'1':'0')}catch(_){}return draw()}
-  if(e.target.closest('[data-replay]')){const sc=document.querySelector('.scheme svg');if(sc){const n=sc.cloneNode(true);sc.replaceWith(n)}return}
+  if(e.target.closest('[data-anim]')){ANIM=!ANIM;try{localStorage.setItem('sm-anim',ANIM?'1':'0')}catch(_){}return draw(ANIM)}
+  if(e.target.closest('[data-replay]'))return draw(true);
   const f=e.target.closest('[data-f]');if(f){ADD.f=f.dataset.f;draw()}});
 document.addEventListener('keydown',e=>{if(!$('help').hidden){if(e.key==='Escape')help(false);return}const m={'+':'+','-':'−','*':'×','/':'÷',Backspace:'⌫',Enter:'=','=':'=',Escape:'C',Delete:'C'}[e.key]||(/^\d$/.test(e.key)?e.key:null);
   if(m){e.preventDefault();press(m)}});
@@ -352,6 +353,10 @@ const help=on=>{$('help').hidden=!on};
 document.addEventListener('pointerdown',e=>{if(e.target.closest('button')&&navigator.vibrate)try{navigator.vibrate(50)}catch(_){}},{passive:true});
 $('helpbtn').onclick=()=>help(true);$('helpx').onclick=()=>help(false);
 $('help').addEventListener('click',e=>{if(e.target.id==='help')help(false)});
+{const box=document.querySelector('.helpbox');let y0=null;
+  box.addEventListener('touchstart',e=>{y0=box.scrollTop<=0?e.touches[0].clientY:null},{passive:true});
+  box.addEventListener('touchmove',e=>{if(y0==null)return;const d=e.touches[0].clientY-y0;box.style.transform=d>0?'translateY('+d+'px)':''},{passive:true});
+  box.addEventListener('touchend',e=>{if(y0==null)return;const d=e.changedTouches[0].clientY-y0;box.style.transform='';y0=null;if(d>90)help(false)});}
 draw();
 
 if('serviceWorker' in navigator&&location.protocol==='https:'&&!/claude/.test(location.host))
