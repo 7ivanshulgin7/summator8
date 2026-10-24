@@ -82,11 +82,25 @@ header p{margin:0;font-size:12px;color:var(--muted)}
 .adleg b{color:var(--fg)}
 .scheme{background:var(--surface);border-radius:16px;padding:10px 6px}
 .scheme svg{display:block;width:100%;height:auto;font-family:var(--body)}
-/* бегущий ток: точки по зелёным проводам, от входа к выходу */
-.flow{fill:none;stroke:var(--accent-ink);stroke-width:1.4;stroke-linecap:round;stroke-dasharray:0 9;animation:flow .9s linear infinite;opacity:.9}
-@keyframes flow{to{stroke-dashoffset:-9}}
-.flowtoggle{align-self:flex-end;border:0;background:var(--sunk);color:var(--muted);border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600}
-.noflow .flow{display:none}
+/* пошаговая анимация: этажи сумматора считаются сверху вниз */
+.scheme{--st:.16s}
+.go{stroke-dasharray:1 1;stroke-dashoffset:1;animation:go var(--st) linear calc(var(--t)*var(--st)) forwards}
+@keyframes go{to{stroke-dashoffset:0}}
+.lit{animation:lit var(--st) linear calc(var(--t)*var(--st)) both}
+@keyframes lit{from{stroke:var(--muted)}to{stroke:var(--accent)}}
+.litd{animation:litd var(--st) linear calc(var(--t)*var(--st)) both}
+@keyframes litd{from{fill:var(--line)}to{fill:var(--accent)}}
+.lits{animation:lits var(--st) linear calc(var(--t)*var(--st)) both}
+@keyframes lits{from{fill:var(--sunk)}to{fill:var(--accent)}}
+.pop{animation:pop var(--st) linear calc(var(--t)*var(--st)) both}
+@keyframes pop{from{opacity:0}to{opacity:1}}
+.rv{animation:rv .3s linear calc(var(--t)*var(--st)) both}
+@keyframes rv{from{opacity:.12}to{opacity:1}}
+.sw{transform-box:view-box;animation:sw var(--st) ease-out calc(var(--t)*var(--st)) both}
+@keyframes sw{from{transform:rotate(-35deg);stroke:var(--muted)}to{transform:rotate(0);stroke:var(--accent)}}
+.static *{animation:none!important}
+.schbar{display:flex;justify-content:flex-end;gap:6px}
+.schbar button{border:0;background:var(--sunk);color:var(--muted);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:600}
 
 /* тост */
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;
@@ -97,7 +111,7 @@ header p{margin:0;font-size:12px;color:var(--muted)}
 footer{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--muted);padding:6px 2px 0}
 .itv{display:inline-flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-weight:600;letter-spacing:.04em}
 .itv svg{width:20px;height:20px}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}.flow{animation:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}.scheme *{animation:none!important}}
 </style>
 </head>
 <body>
@@ -113,17 +127,16 @@ footer{display:flex;align-items:center;justify-content:space-between;font-size:1
 </div>
 <div id="toast" role="status"></div>
 <script>
-const APP_VER='1.1.0';
+const APP_VER='1.2.0';
 document.getElementById('ver').textContent='v'+APP_VER;
 const $=id=>document.getElementById(id);
 let tT;function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(tT);tT=setTimeout(()=>e.classList.remove('show'),1800)}
 
 let ADD={a:0,b:0,f:'a',op:'+'};
-let FLOW=true;try{FLOW=localStorage.getItem('sm-flow')!=='0'}catch(e){}
+let ANIM=true;try{ANIM=localStorage.getItem('sm-anim')!=='0'}catch(e){}
 const adOn='var(--accent)',adOff='var(--line)',adInk='var(--accent-ink)';
 const adCell=(x,y,v,w)=>'<rect x="'+x+'" y="'+y+'" width="'+(w||16)+'" height="16" rx="4" fill="'+(v?adOn:'var(--sunk)')+'"/><text x="'+(x+(w||16)/2)+'" y="'+(y+12)+'" font-size="10" font-weight="700" text-anchor="middle" fill="'+(v?adInk:'var(--muted)')+'">'+v+'</text>';
 const adT=(x,y,t,o)=>'<text x="'+x+'" y="'+y+'" font-size="'+((o&&o.s)||8)+'" '+(o&&o.a?'text-anchor="'+o.a+'" ':'')+(o&&o.b?'font-weight="700" ':'')+'fill="'+((o&&o.c)||'var(--muted)')+'">'+t+'</text>';
-const flow=d=>'<path class="flow" d="'+d+'"/>';
 const svgWrap=(h,sv)=>'<svg viewBox="0 0 360 '+h+'" role="img">'+sv+'</svg>';
 
 // умножение: вентили И делают «A × один бит B», сумматоры складывают сдвинутые строчки
@@ -133,16 +146,17 @@ function adMulSvg(a,b){
   sv+=adT(X(7)-4,y+12,'каждый бит A идёт на вентили И ↓',{a:'end',s:7});
   y+=26;
   for(let j=0;j<8;j++){const bj=bit(b,j),pp=bj?a<<j:0;
+    sv+='<g class="rv" style="--t:'+(j*3)+'">';
     sv+=adT(4,y+12,'b'+j+'='+bj,{s:10,b:1,c:bj?adOn:'var(--muted)'});
     for(let i=0;i<8;i++){const v=bit(a,i)&bj,x=X(i+j)+2;sv+='<path d="M'+x+','+y+'H'+(x+14)+'V'+(y+7)+'A7,7 0 0 1 '+x+','+(y+7)+'Z" fill="'+(v?adOn:'var(--surface)')+'" stroke="'+(v?adOn:'var(--muted)')+'" stroke-width="1.2"/>'+
-      '<line x1="'+(x+7)+'" x2="'+(x+7)+'" y1="'+(y+14)+'" y2="'+(y+20)+'" stroke="'+(v?adOn:adOff)+'" stroke-width="'+(v?2:1)+'"/>'+(v?flow('M'+(x+7)+','+(y+14)+'V'+(y+20)):'')}
+      '<line x1="'+(x+7)+'" x2="'+(x+7)+'" y1="'+(y+14)+'" y2="'+(y+20)+'" stroke="'+(v?adOn:adOff)+'" stroke-width="'+(v?2:1)+'"/>'}
     if(j===0)sv+=adT(X(0)+20,y+9,'И',{a:'end',s:7});
     acc+=pp;
     const l=X(Math.min(15,j+7)),r=X(0)+cw;
     sv+='<rect x="'+l+'" y="'+(y+20)+'" width="'+(r-l)+'" height="12" rx="3" fill="var(--sunk)" stroke="'+(bj?adOn:adOff)+'"/>'+adT((l+r)/2,y+29,bj?'сумматор: + A сдвинутое на '+j:'b'+j+'=0 — прибавлять нечего',{a:'middle',s:7,c:bj?'var(--fg)':'var(--muted)'});
     for(let c=0;c<16;c++)if(c<=j+7||bit(acc,c))sv+=adCell(X(c)+1,y+36,bit(acc,c));
     sv+=adT(x0-4,y+48,String(acc),{a:'end',s:9,b:1,c:'var(--fg)'});
-    y+=H}
+    sv+='</g>';y+=H}
   return svgWrap(y+2,sv);
 }
 // деление «в столбик»: сносим бит A, пробуем вычесть B, влезло — пишем 1
@@ -150,43 +164,56 @@ function adDivSvg(a,b){
   const bit=(v,i)=>(v>>i)&1,H=54;let y=6,sv='',r=0;
   sv+=adT(4,y+8,'B = '+b+' = '+b.toString(2),{s:9,b:1,c:'var(--fg)'})+adT(356,y+8,'бит ответа',{a:'end',s:8});y+=16;
   for(let i=7;i>=0;i--){const ai=bit(a,i);r=(r<<1)|ai;const ok=r>=b,before=r;if(ok)r-=b;
+    sv+='<g class="rv" style="--t:'+((7-i)*3)+'">';
     sv+=adT(4,y+9,'сношу a'+i+'='+ai,{s:9,b:1,c:ai?adOn:'var(--muted)'});
     for(let k=0;k<9;k++){const c=8-k;sv+=adCell(4+k*17,y+14,bit(before,c))}
     sv+=adT(4+9*17+2,y+26,'='+before,{s:9,c:'var(--fg)'});
     sv+='<path d="M196,'+(y+22)+'H210" stroke="'+adOff+'" stroke-width="1.4"/><rect x="210" y="'+(y+12)+'" width="44" height="20" rx="5" fill="var(--sunk)" stroke="'+(ok?adOn:'var(--muted)')+'"/>'+adT(232,y+25,'− B',{a:'middle',s:10,b:1,c:'var(--fg)'});
-    sv+='<path d="M254,'+(y+22)+'H266" stroke="'+(ok?adOn:adOff)+'" stroke-width="'+(ok?2:1.4)+'"/>'+(ok?flow('M254,'+(y+22)+'H266'):'')+'<path d="M282,'+(y+10)+'L294,'+(y+22)+'L282,'+(y+34)+'L270,'+(y+22)+'Z" transform="translate(-4,0)" fill="'+(ok?adOn:'var(--surface)')+'" stroke="'+(ok?adOn:'var(--muted)')+'"/>'+adT(278,y+25,'≥0',{a:'middle',s:7,b:1,c:ok?adInk:'var(--muted)'});
-    sv+='<path d="M290,'+(y+22)+'H322" stroke="'+(ok?adOn:adOff)+'" stroke-width="'+(ok?2:1.4)+'"/>'+(ok?flow('M290,'+(y+22)+'H322'):'')+'<circle cx="336" cy="'+(y+22)+'" r="11" fill="'+(ok?adOn:'var(--sunk)')+'"/>'+adT(336,y+26,ok?'1':'0',{a:'middle',s:12,b:1,c:ok?adInk:'var(--muted)'});
+    sv+='<path d="M254,'+(y+22)+'H266" stroke="'+(ok?adOn:adOff)+'" stroke-width="'+(ok?2:1.4)+'"/>'+'<path d="M282,'+(y+10)+'L294,'+(y+22)+'L282,'+(y+34)+'L270,'+(y+22)+'Z" transform="translate(-4,0)" fill="'+(ok?adOn:'var(--surface)')+'" stroke="'+(ok?adOn:'var(--muted)')+'"/>'+adT(278,y+25,'≥0',{a:'middle',s:7,b:1,c:ok?adInk:'var(--muted)'});
+    sv+='<path d="M290,'+(y+22)+'H322" stroke="'+(ok?adOn:adOff)+'" stroke-width="'+(ok?2:1.4)+'"/>'+'<circle cx="336" cy="'+(y+22)+'" r="11" fill="'+(ok?adOn:'var(--sunk)')+'"/>'+adT(336,y+26,ok?'1':'0',{a:'middle',s:12,b:1,c:ok?adInk:'var(--muted)'});
     sv+=adT(232,y+44,ok?'влезло — вычитаю, остаток '+r:'не влезло — оставляю как было',{a:'middle',s:7,c:ok?adOn:'var(--muted)'});
+    sv+='</g>';
     if(i)sv+='<line x1="0" x2="360" y1="'+(y+H-3)+'" y2="'+(y+H-3)+'" stroke="var(--line)" stroke-dasharray="2 4" opacity=".5"/>';
     y+=H}
   return svgWrap(y+2,sv);
 }
-// сложение / вычитание: 8 полных сумматоров
+// сложение / вычитание: 8 полных сумматоров. Анимация по шагам: на каждом этаже
+// краны-транзисторы у цифр открываются → вентили → ответ → перенос вниз на следующий этаж
 function adAddSvg(rows,c0,sub){
-  const N=8,W=360,H=90,top=6,on=adOn,off=adOff;
-  const wire=(d,v)=>'<path d="'+d+'" fill="none" stroke="'+(v?on:off)+'" stroke-width="'+(v?2.4:1.4)+'"/>'+(v?flow(d):'');
-  const dot=(x,y,v)=>'<circle cx="'+x+'" cy="'+y+'" r="2.4" fill="'+(v?on:off)+'"/>';
-  const G=(t,x,y,v)=>{const h=13,w=30;let d=t==='and'?'M'+x+','+(y-h)+'H'+(x+16)+'A'+h+','+h+' 0 0 1 '+(x+16)+','+(y+h)+'H'+x+'Z'
+  const N=8,W=360,H=90,top=6,on=adOn,off=adOff,K=5; // K шагов на этаж
+  const tt=t=>' style="--t:'+t+'"';
+  const wire=(d,v,t)=>'<path d="'+d+'" fill="none" stroke="'+off+'" stroke-width="1.4"/>'+
+    (v?'<path class="go" pathLength="1" d="'+d+'" fill="none" stroke="'+on+'" stroke-width="2.4"'+tt(t)+'/>':'');
+  const dot=(x,y,v,t)=>'<circle cx="'+x+'" cy="'+y+'" r="2.4" fill="'+(v?on:off)+'"'+(v?' class="litd"'+tt(t):'')+'/>';
+  const G=(k,x,y,v,t)=>{const h=13,w=30,cl=v?' class="lit"'+tt(t):'';let d=k==='and'?'M'+x+','+(y-h)+'H'+(x+16)+'A'+h+','+h+' 0 0 1 '+(x+16)+','+(y+h)+'H'+x+'Z'
       :'M'+x+','+(y-h)+'Q'+(x+20)+','+(y-h)+' '+(x+w)+','+y+'Q'+(x+20)+','+(y+h)+' '+x+','+(y+h)+'Q'+(x+8)+','+y+' '+x+','+(y-h)+'Z';
-    return '<path d="'+d+'" fill="var(--surface)" stroke="'+(v?on:'var(--muted)')+'" stroke-width="1.6"/>'+(t==='xor'?'<path d="M'+(x-5)+','+(y-h)+'Q'+(x+3)+','+y+' '+(x-5)+','+(y+h)+'" fill="none" stroke="'+(v?on:'var(--muted)')+'" stroke-width="1.6"/>':'')+
-      '<text x="'+(x+(t==='and'?13:14))+'" y="'+(y+3)+'" font-size="7.5" text-anchor="middle" fill="var(--muted)">'+(t==='and'?'И':t==='or'?'ИЛИ':'XOR')+'</text>'};
+    return '<path d="'+d+'" fill="var(--surface)" stroke="'+(v?on:'var(--muted)')+'" stroke-width="1.6"'+cl+'/>'+(k==='xor'?'<path d="M'+(x-5)+','+(y-h)+'Q'+(x+3)+','+y+' '+(x-5)+','+(y+h)+'" fill="none" stroke="'+(v?on:'var(--muted)')+'" stroke-width="1.6"'+cl+'/>':'')+
+      '<text x="'+(x+(k==='and'?13:14))+'" y="'+(y+3)+'" font-size="7.5" text-anchor="middle" fill="var(--muted)">'+(k==='and'?'И':k==='or'?'ИЛИ':'XOR')+'</text>'};
+  // кран-транзистор у цифры: 1 — рычажок замыкается и пускает ток, 0 — остаётся открытым
+  const sw=(y,v,t)=>'<circle cx="38" cy="'+y+'" r="1.8" fill="var(--muted)"/><circle cx="50" cy="'+y+'" r="1.8" fill="var(--muted)"/>'+
+    (v?'<line x1="38" y1="'+y+'" x2="50" y2="'+y+'" stroke="'+on+'" stroke-width="2.2" stroke-linecap="round" class="sw" style="--t:'+t+';transform-origin:38px '+y+'px"/>'
+      :'<line x1="38" y1="'+y+'" x2="50" y2="'+y+'" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" transform="rotate(-35 38 '+y+')"/>');
   let svg='<text x="150" y="'+(top+2)+'" font-size="9" fill="'+(c0?on:'var(--muted)')+'" text-anchor="end">'+(c0?'+1 для минуса':'перенос 0')+'</text>';
-  rows.forEach((r,i)=>{const y=top+i*H,Y=k=>y+k;
+  rows.forEach((r,i)=>{const y=top+i*H,Y=k=>y+k,b=i*K;
     svg+='<text x="4" y="'+Y(19)+'" font-size="11" font-weight="700" fill="'+(r.A?on:'var(--muted)')+'">a'+i+'='+r.A+'</text><text x="4" y="'+Y(35)+'" font-size="11" font-weight="700" fill="'+(r.B?on:'var(--muted)')+'">b'+i+'='+r.B+'</text>';
-    svg+=wire('M38,'+Y(16)+'H70',r.A)+wire('M38,'+Y(32)+'H70',r.B)+wire('M46,'+Y(16)+'V'+Y(52)+'H70',r.A)+wire('M56,'+Y(32)+'V'+Y(68)+'H70',r.B)+dot(46,Y(16),r.A)+dot(56,Y(32),r.B);
-    svg+=wire((i?'M145,'+(y-H+86):'M145,'+Y(4))+'V'+Y(68)+'H160',r.cin)+wire('M145,'+Y(32)+'H160',r.cin)+dot(145,Y(32),r.cin);
-    svg+=wire('M100,'+Y(24)+'H128V'+Y(16)+'H160',r.s1)+wire('M128,'+Y(16)+'V'+Y(52)+'H160',r.s1)+dot(128,Y(16),r.s1);
-    svg+=wire('M96,'+Y(60)+'H108V'+Y(80)+'H212V'+Y(52)+'H226',r.c1)+wire('M188,'+Y(60)+'H200V'+Y(36)+'H226',r.c2);
-    svg+=wire('M190,'+Y(24)+'H318',r.S)+'<circle cx="330" cy="'+Y(24)+'" r="12" fill="'+(r.S?on:'var(--sunk)')+'"/><text x="330" y="'+Y(28)+'" font-size="13" font-weight="700" text-anchor="middle" fill="'+(r.S?adInk:'var(--muted)')+'">'+r.S+'</text>'+
+    // шаг 0: краны; шаг 1: провода к первым вентилям и перенос сверху
+    svg+=wire('M50,'+Y(16)+'H70',r.A,b+1)+wire('M50,'+Y(32)+'H70',r.B,b+1)+wire('M56,'+Y(16)+'V'+Y(52)+'H70',r.A,b+1)+wire('M62,'+Y(32)+'V'+Y(68)+'H70',r.B,b+1)+dot(56,Y(16),r.A,b+1)+dot(62,Y(32),r.B,b+1);
+    svg+=sw(Y(16),r.A,b)+sw(Y(32),r.B,b);
+    svg+=wire((i?'M145,'+(y-H+86):'M145,'+Y(4))+'V'+Y(68)+'H160',r.cin,b)+wire('M145,'+Y(32)+'H160',r.cin,b+1)+dot(145,Y(32),r.cin,b+1);
+    // шаг 2: XOR и И первой ступени отвечают
+    svg+=wire('M100,'+Y(24)+'H128V'+Y(16)+'H160',r.s1,b+2)+wire('M128,'+Y(16)+'V'+Y(52)+'H160',r.s1,b+2)+dot(128,Y(16),r.s1,b+2);
+    svg+=wire('M96,'+Y(60)+'H108V'+Y(80)+'H212V'+Y(52)+'H226',r.c1,b+2)+wire('M188,'+Y(60)+'H200V'+Y(36)+'H226',r.c2,b+3);
+    // шаг 3: вторая ступень, шаг 4: ответ и перенос вниз
+    svg+=wire('M190,'+Y(24)+'H318',r.S,b+3)+'<circle cx="330" cy="'+Y(24)+'" r="12" fill="'+(r.S?on:'var(--sunk)')+'"'+(r.S?' class="lits"'+tt(b+4):'')+'/><text x="330" y="'+Y(28)+'" font-size="13" font-weight="700" text-anchor="middle" fill="'+(r.S?adInk:'var(--muted)')+'" class="pop"'+tt(b+4)+'>'+r.S+'</text>'+
       '<text x="330" y="'+Y(48)+'" font-size="8" text-anchor="middle" fill="var(--muted)">s'+i+'</text>';
     if(i===0)svg+='<text x="72" y="'+Y(45)+'" font-size="7" fill="var(--muted)">разные?</text><text x="76" y="'+Y(82)+'" font-size="7" fill="var(--muted)">обе?</text><text x="174" y="'+Y(5)+'" font-size="7" fill="var(--muted)">+ перенос</text><text x="228" y="'+Y(26)+'" font-size="7" fill="var(--muted)">хоть один?</text><text x="330" y="'+Y(60)+'" font-size="7" text-anchor="middle" fill="var(--muted)">ответ</text>';
-    if(r.co&&i<N-1)svg+='<text x="276" y="'+Y(78)+'" font-size="8" font-weight="700" fill="var(--accent)">несу 1 ↓</text>';
-    svg+=wire('M256,'+Y(44)+'H270V'+Y(86)+(i<N-1?'H145':'H300V'+Y(86)),r.co);
-    svg+=G('xor',70,Y(24),r.s1)+G('and',70,Y(60),r.c1)+G('xor',160,Y(24),r.S)+G('and',160,Y(60),r.c2)+G('or',226,Y(44),r.co);
+    if(r.co&&i<N-1)svg+='<text x="276" y="'+Y(78)+'" font-size="8" font-weight="700" fill="var(--accent)" class="pop"'+tt(b+4)+'>несу 1 ↓</text>';
+    svg+=wire('M256,'+Y(44)+'H270V'+Y(86)+(i<N-1?'H145':'H300V'+Y(86)),r.co,b+4);
+    svg+=G('xor',70,Y(24),r.s1,b+2)+G('and',70,Y(60),r.c1,b+2)+G('xor',160,Y(24),r.S,b+3)+G('and',160,Y(60),r.c2,b+3)+G('or',226,Y(44),r.co,b+4);
     if(i<N-1)svg+='<line x1="0" x2="'+W+'" y1="'+Y(88)+'" y2="'+Y(88)+'" stroke="var(--line)" stroke-dasharray="2 4" opacity=".5"/>';
   });
   const last=rows[N-1].co,yl=top+(N-1)*H+86;
-  svg+='<circle cx="300" cy="'+yl+'" r="3" fill="'+(last&&!sub?'var(--bad)':off)+'"/><text x="306" y="'+(yl+4)+'" font-size="10" text-anchor="'+(sub?'end':'start')+'" fill="'+(last&&!sub?'var(--bad)':'var(--muted)')+'">'+(sub?(last?'перенос 1 — выбрасываем, ответ ≥ 0':'переноса нет — ответ меньше нуля'):'перенос '+last+(last?' → s8 = 1':''))+'</text>';
+  svg+='<g class="pop"'+tt(N*K)+'><circle cx="300" cy="'+yl+'" r="3" fill="'+(last&&!sub?'var(--bad)':off)+'"/><text x="306" y="'+(yl+4)+'" font-size="10" text-anchor="'+(sub?'end':'start')+'" fill="'+(last&&!sub?'var(--bad)':'var(--muted)')+'">'+(sub?(last?'перенос 1 — выбрасываем, ответ ≥ 0':'переноса нет — ответ меньше нуля'):'перенос '+last+(last?' → s8 = 1':''))+'</text></g>';
   return svgWrap(top+N*H+4,svg);
 }
 
@@ -206,7 +233,7 @@ function draw(){
   if(adder){
     bin+='<div class="adr sum"><span>=</span><b class="num">'+neg(res)+'</b><div class="adb">'+[...Array(sub?N:N+1)].map((_,j)=>{const i=(sub?N-1:N)-j;return '<i class="'+(bit(sum,i)?'on':'')+'">'+bit(sum,i)+'</i>'}).join('')+'</div></div>'+
       (sub&&res<0?'<div class="sub">Минус компьютер записывает хитро: '+(sum&255)+' = 256 − '+(-res)+'. Так он понимает, что это −'+(-res)+'.</div>':'');
-    legend='<div class="adleg"><div><b>XOR</b> «разные?» — 1 и 0 дают 1, а две одинаковые — 0</div><div><b>И</b> «обе единички?» — тогда в эту клетку не влезает, надо перенести</div><div><b>ИЛИ</b> «есть хоть один перенос?» — передаём единичку следующему этажу</div><div><span style="color:var(--accent)">━</span> зелёный провод — бежит единичка, серый — ноль</div>'+(sub?'<div><b>Минус</b> — та же схема: B переворачиваем и добавляем 1 в самый первый перенос.</div>':'')+'</div>';
+    legend='<div class="adleg"><div><b>XOR</b> «разные?» — 1 и 0 дают 1, а две одинаковые — 0</div><div><b>И</b> «обе единички?» — тогда в эту клетку не влезает, надо перенести</div><div><b>ИЛИ</b> «есть хоть один перенос?» — передаём единичку следующему этажу</div><div><span style="color:var(--accent)">━</span> зелёный провод — бежит единичка, серый — ноль</div><div><b>Кран</b> у цифры — это транзистор: единичка открывает его (рычажок замыкается), и ток бежит дальше; нолик — кран закрыт, тока нет</div><div><b>Сверху вниз</b> — каждый этаж ждёт перенос от предыдущего, поэтому считается по очереди</div>'+(sub?'<div><b>Минус</b> — та же схема: B переворачиваем и добавляем 1 в самый первый перенос.</div>':'')+'</div>';
     scheme=adAddSvg(rows,c0,sub);
   }else if(op==='×'){
     bin+='<div class="adr sum"><span>=</span><b class="num">'+res+'</b></div>';
@@ -224,7 +251,7 @@ function draw(){
     '<section class="adcalc"><div class="addisp num"><span data-f="a"'+(ADD.f==='a'?' class="cur"':'')+'>'+a+'</span> '+op+' <span data-f="b"'+(ADD.f==='b'?' class="cur"':'')+'>'+b+'</span> = <b>'+(res==null?'<small>на 0 нельзя</small>':neg(res)+(rem?' <small>ост. '+rem+'</small>':''))+'</b></div>'+
       '<div class="adkeys">'+['7','8','9','C','4','5','6','÷','1','2','3','×','⌫','0','−','+'].map(k=>'<button data-ak="'+k+'"'+(/\d/.test(k)?'':' class="op'+(k===op?' sel':'')+'"')+' aria-label="'+({'⌫':'Стереть','C':'Сброс'}[k]||k)+'">'+k+'</button>').join('')+'</div></section>'+
     '<section class="card">'+bin+legend+'</section>'+
-    (scheme?'<section class="scheme'+(FLOW?'':' noflow')+'" style="display:flex;flex-direction:column;gap:4px"><button class="flowtoggle" data-flow>'+(FLOW?'⏸ ток':'▶ ток')+'</button>'+scheme+'</section>':'');
+    (scheme?'<section class="scheme'+(ANIM?'':' static')+'" style="display:flex;flex-direction:column;gap:6px"><div class="schbar">'+(ANIM?'<button data-replay>↻ ещё раз</button>':'')+'<button data-anim>'+(ANIM?'⏸ без анимации':'▶ анимация')+'</button></div>'+scheme+'</section>':'');
 }
 function press(k){const f=ADD.f;
   if(/\d/.test(k)){const v=ADD[f]*10+ +k;if(v>255){toast('Сумматор 8-битный: числа до 255');return}ADD[f]=v}
@@ -233,7 +260,8 @@ function press(k){const f=ADD.f;
   else if(k==='C'){ADD={a:0,b:0,f:'a',op:'+'}}
   draw()}
 $('app').addEventListener('click',e=>{const k=e.target.closest('[data-ak]');if(k)return press(k.dataset.ak);
-  if(e.target.closest('[data-flow]')){FLOW=!FLOW;try{localStorage.setItem('sm-flow',FLOW?'1':'0')}catch(_){}return draw()}
+  if(e.target.closest('[data-anim]')){ANIM=!ANIM;try{localStorage.setItem('sm-anim',ANIM?'1':'0')}catch(_){}return draw()}
+  if(e.target.closest('[data-replay]')){const sc=document.querySelector('.scheme svg');if(sc){const n=sc.cloneNode(true);sc.replaceWith(n)}return}
   const f=e.target.closest('[data-f]');if(f){ADD.f=f.dataset.f;draw()}});
 document.addEventListener('keydown',e=>{const m={'+':'+','-':'−','*':'×','/':'÷',Backspace:'⌫',Escape:'C',Delete:'C'}[e.key]||(/^\d$/.test(e.key)?e.key:null);
   if(m){e.preventDefault();press(m)}});
