@@ -45,10 +45,12 @@ input,textarea,select{font-size:16px;-webkit-user-select:text;user-select:text}
 button{touch-action:manipulation;cursor:pointer;font:inherit}
 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-.wrap{max-width:520px;margin:0 auto;padding-block:10px calc(var(--dockh,420px) + 14px);
+.wrap{max-width:520px;margin:0 auto;min-height:100dvh;padding-block:10px calc(var(--dockh,420px) + 14px);
   padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px));
   display:flex;flex-direction:column;gap:10px}
-header{display:flex;align-items:baseline;gap:10px;padding:4px 2px 0}
+header{display:flex;align-items:center;gap:12px;padding:4px 2px 0}
+.ttl{display:flex;flex-direction:column;gap:2px}
+.ver{font-size:11px;color:var(--muted);letter-spacing:.03em}
 header h1{font:600 20px/1.1 var(--display);margin:0;letter-spacing:-.01em}
 header h1 i{font-style:normal;color:var(--accent)}
 header p{margin:0;font-size:13px;color:var(--muted)}
@@ -95,7 +97,8 @@ header p{margin:0;font-size:13px;color:var(--muted)}
 .adr.sum .adb i{width:23px}
 .adleg{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:2px;margin-top:4px}
 .adleg b{color:var(--fg)}
-.scheme{background:var(--surface);border-radius:16px;padding:10px 6px}
+.scheme{background:var(--surface);border-radius:16px;padding:10px 6px;flex:1;display:flex;flex-direction:column;justify-content:center}
+main>.card:last-child{flex:1}
 .scheme svg{display:block;width:100%;height:auto;font-family:var(--body)}
 /* пошаговая анимация: этажи сумматора считаются сверху вниз */
 .scheme{--st:.2s}
@@ -133,22 +136,15 @@ header p{margin:0;font-size:13px;color:var(--muted)}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 
 /* подвал и пасхалка */
-footer{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--muted);padding:6px 2px 0}
-.itv{display:inline-flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-weight:600;letter-spacing:.04em}
+.helpbox .itv{display:flex;justify-content:center;margin-top:14px;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-weight:600;letter-spacing:.04em}
 .itv svg{width:20px;height:20px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}.scheme *{animation:none!important}.scheme .go{stroke-dashoffset:0}}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header><h1>Сумм<i>а</i>тор</h1><p>как компьютер считает ноликами и единичками</p></header>
-  <main id="app" style="display:flex;flex-direction:column;gap:10px"></main>
-  <footer>
-    <span class="num" id="ver"></span>
-    <span class="itv" title="itivan">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h12M9 4v16" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none"/><path d="M12 8l4.5 12L21 8" stroke="#FF2E93" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>itivan
-    </span>
-  </footer>
+  <header><div class="ttl"><h1>Сумм<i>а</i>тор</h1><span class="num ver" id="ver"></span></div><p>как компьютер считает ноликами и единичками</p></header>
+  <main id="app" style="display:flex;flex-direction:column;gap:10px;flex:1"></main>
 </div>
 <div id="dock"><div class="dockin" id="dockin"></div></div>
 <div id="toast" role="status"></div>
@@ -182,9 +178,10 @@ footer{display:flex;align-items:center;justify-content:space-between;font-size:1
   <h3>👆 Кнопки</h3>
   <p><b>=</b> или <b>▶ показать по шагам</b> — посмотреть, как бежит ток, с самого начала. <b>Без анимации</b> — схема всегда сразу готовая.</p>
   <p>Нажми на число в окошке калькулятора, чтобы его поменять. Числа — от 0 до 255: больше в 8 клеток не помещается.</p>
+  <p class="itv"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h12M9 4v16" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none"/><path d="M12 8l4.5 12L21 8" stroke="#FF2E93" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>itivan</p>
 </div></div>
 <script>
-const APP_VER='1.7.0';
+const APP_VER='1.7.1';
 document.getElementById('ver').textContent='v'+APP_VER;
 const $=id=>document.getElementById(id);
 let tT;function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(tT);tT=setTimeout(()=>e.classList.remove('show'),1800)}
