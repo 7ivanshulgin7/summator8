@@ -45,7 +45,7 @@ input,textarea,select{font-size:16px;-webkit-user-select:text;user-select:text}
 button{touch-action:manipulation;cursor:pointer;font:inherit}
 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-.wrap{max-width:520px;margin:0 auto;padding-block:10px 18px;
+.wrap{max-width:520px;margin:0 auto;padding-block:10px calc(var(--dockh,420px) + 14px);
   padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px));
   display:flex;flex-direction:column;gap:10px}
 header{display:flex;align-items:baseline;gap:10px;padding:4px 2px 0}
@@ -55,13 +55,25 @@ header p{margin:0;font-size:13px;color:var(--muted)}
 .num{font-variant-numeric:tabular-nums}
 
 /* калькулятор */
-.adcalc{background:var(--sunk);border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:8px}
-.addisp{font-size:36px;line-height:1.15;text-align:right;padding:6px 8px 2px;color:var(--muted);min-height:52px;overflow-wrap:anywhere}
+.adcalc{display:flex;flex-direction:column;gap:6px}
+/* нижняя панель под большой палец: дисплей, инструменты и клавиши — в нижней половине экрана */
+#dock{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--sunk);border-radius:22px 22px 0 0;box-shadow:0 -6px 24px rgba(10,20,20,.12);
+  padding-block:8px calc(8px + env(safe-area-inset-bottom,0px));padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
+.dockin{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:6px}
+#dock.min .adkeys{display:none}
+.tools{display:flex;gap:6px;align-items:center}
+.tools .grow{flex:1}
+.tbtn{min-height:44px;min-width:44px;border:0;border-radius:14px;background:var(--surface);color:var(--fg);font-size:15px;font-weight:600;padding:0 12px}
+.tbtn.round{border-radius:50%;padding:0;font-size:18px;color:var(--accent);background:var(--accent-soft)}
+.tbtn[aria-pressed=true]{background:var(--accent-soft);color:var(--accent)}
+.tbtn[aria-pressed=false]{color:var(--muted)}
+.tbtn.grow{background:var(--accent);color:var(--accent-ink)}
+.addisp{font-size:32px;line-height:1.15;text-align:right;padding:2px 8px 0;color:var(--muted);min-height:44px;overflow-wrap:anywhere}
 .addisp span{padding:0 2px;border-bottom:2px solid transparent;cursor:pointer}
 .addisp .cur{color:var(--fg);border-bottom-color:var(--accent)}
 .addisp b{color:var(--fg)}.addisp small{font-size:17px;color:var(--muted)}
 .adkeys{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.adkeys button{height:56px;border:0;border-radius:16px;background:var(--surface);color:var(--fg);font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;font-size:24px;font-weight:500}
+.adkeys button{height:50px;border:0;border-radius:16px;background:var(--surface);color:var(--fg);font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;font-size:24px;font-weight:500}
 .adkeys button:active{transform:scale(.96)}
 .adkeys .op{background:var(--accent-soft);color:var(--accent)}
 .adkeys .op.sel{background:var(--accent);color:var(--accent-ink)}
@@ -129,7 +141,7 @@ footer{display:flex;align-items:center;justify-content:space-between;font-size:1
 </head>
 <body>
 <div class="wrap">
-  <header><h1>Сумм<i>а</i>тор</h1><p>как компьютер считает ноликами и единичками</p><button class="helpbtn" id="helpbtn" aria-label="Как это работает">?</button></header>
+  <header><h1>Сумм<i>а</i>тор</h1><p>как компьютер считает ноликами и единичками</p></header>
   <main id="app" style="display:flex;flex-direction:column;gap:10px"></main>
   <footer>
     <span class="num" id="ver"></span>
@@ -138,6 +150,7 @@ footer{display:flex;align-items:center;justify-content:space-between;font-size:1
     </span>
   </footer>
 </div>
+<div id="dock"><div class="dockin" id="dockin"></div></div>
 <div id="toast" role="status"></div>
 <div id="help" hidden><div class="helpbox" role="dialog" aria-modal="true" aria-labelledby="helpttl"><div class="grab" aria-hidden="true"></div>
   <div class="helphead"><b id="helpttl">Как это работает</b><button id="helpx" aria-label="Закрыть">✕</button></div>
@@ -171,13 +184,14 @@ footer{display:flex;align-items:center;justify-content:space-between;font-size:1
   <p>Нажми на число в окошке калькулятора, чтобы его поменять. Числа — от 0 до 255: больше в 8 клеток не помещается.</p>
 </div></div>
 <script>
-const APP_VER='1.6.0';
+const APP_VER='1.7.0';
 document.getElementById('ver').textContent='v'+APP_VER;
 const $=id=>document.getElementById(id);
 let tT;function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(tT);tT=setTimeout(()=>e.classList.remove('show'),1800)}
 
 let ADD={a:0,b:0,f:'a',op:'+'};
 let ANIM=true;try{ANIM=localStorage.getItem('sm-anim')!=='0'}catch(e){}
+let MIN=false;try{MIN=localStorage.getItem('sm-min')==='1'}catch(e){}
 const adOn='var(--accent)',adOff='var(--line)',adInk='var(--accent-ink)';
 const adCell=(x,y,v,w)=>'<rect x="'+x+'" y="'+y+'" width="'+(w||16)+'" height="16" rx="4" fill="'+(v?adOn:'var(--sunk)')+'"/><text x="'+(x+(w||16)/2)+'" y="'+(y+12)+'" font-size="10" font-weight="700" text-anchor="middle" fill="'+(v?adInk:'var(--muted)')+'">'+v+'</text>';
 const adT=(x,y,t,o)=>'<text x="'+x+'" y="'+y+'" font-size="'+Math.max((o&&o.s)||8,8)+'" '+(o&&o.a?'text-anchor="'+o.a+'" ':'')+(o&&o.b?'font-weight="700" ':'')+'fill="'+((o&&o.c)||'var(--muted)')+'">'+t+'</text>';
@@ -327,11 +341,16 @@ function draw(play){
     else{bin='';scheme=adDivSvg(a,b)}
   }
 
-  $('app').innerHTML=
+  $('dockin').innerHTML=
     '<section class="adcalc"><div class="addisp num"><span data-f="a"'+(ADD.f==='a'?' class="cur"':'')+'>'+a+'</span> '+op+' <span data-f="b"'+(ADD.f==='b'?' class="cur"':'')+'>'+b+'</span> = <b>'+(res==null?'<small>на 0 нельзя</small>':neg(res)+(rem?' <small>ост. '+rem+'</small>':''))+'</b></div>'+
       '<div class="adkeys">'+KEYS.map(([k,c])=>'<button data-ak="'+k+'" class="'+(c||'')+(k===op?' sel':'')+'" aria-label="'+({'⌫':'Стереть','C':'Сброс','=':'Показать схему'}[k]||k)+'">'+k+'</button>').join('')+'</div></section>'+
+    '<div class="tools"><button class="tbtn round" data-help aria-label="Как это работает">?</button>'+
+      (scheme?'<button class="tbtn grow" data-replay>▶ По шагам</button><button class="tbtn" data-anim aria-pressed="'+ANIM+'">Анимация</button>':'<span class="grow"></span>')+
+      '<button class="tbtn round" data-min aria-label="'+(MIN?'Показать клавиатуру':'Спрятать клавиатуру')+'">'+(MIN?'⌃':'⌄')+'</button></div>';
+  $('dock').classList.toggle('min',MIN);
+  $('app').innerHTML=
     (bin?'<section class="card">'+bin+'</section>':'')+
-    (scheme?'<section class="scheme'+(ANIM&&play?'':' static')+'" style="display:flex;flex-direction:column;gap:6px"><div class="schbar">'+(ANIM?'<button data-replay>▶ показать по шагам</button>':'')+'<button data-anim>'+(ANIM?'Без анимации':'Анимация')+'</button></div>'+scheme+'</section>':'');
+    (scheme?'<section class="scheme'+(ANIM&&play?'':' static')+'">'+scheme+'</section>':'');
 }
 // классическая раскладка: C ⌫ ÷ / 7 8 9 × / 4 5 6 − / 1 2 3 + / 0 =
 const KEYS=[['C','fn w2'],['⌫','fn'],['÷','op'],['7'],['8'],['9'],['×','op'],['4'],['5'],['6'],['−','op'],['1'],['2'],['3'],['+','op'],['0','w2'],['=','eq w2']];
@@ -342,16 +361,21 @@ function press(k){const f=ADD.f;
   else if('+−×÷'.includes(k)){ADD.op=k;ADD.f='b'}
   else if(k==='C'){ADD={a:0,b:0,f:'a',op:'+'}}
   draw()}
-$('app').addEventListener('click',e=>{const k=e.target.closest('[data-ak]');if(k)return press(k.dataset.ak);
-  if(e.target.closest('[data-anim]')){ANIM=!ANIM;try{localStorage.setItem('sm-anim',ANIM?'1':'0')}catch(_){}return draw(ANIM)}
+const onTap=e=>{const k=e.target.closest('[data-ak]');if(k)return press(k.dataset.ak);
+  if(e.target.closest('[data-help]'))return help(true);
+  if(e.target.closest('[data-min]')){MIN=!MIN;try{localStorage.setItem('sm-min',MIN?'1':'0')}catch(_){}return draw()}
+  if(e.target.closest('[data-anim]')){ANIM=!ANIM;try{localStorage.setItem('sm-anim',ANIM?'1':'0')}catch(_){}toast(ANIM?'Анимация включена: жми «=» или «▶ По шагам»':'Анимация выключена');return draw(ANIM)}
   if(e.target.closest('[data-replay]'))return draw(true);
-  const f=e.target.closest('[data-f]');if(f){ADD.f=f.dataset.f;draw()}});
+  const f=e.target.closest('[data-f]');if(f){ADD.f=f.dataset.f;draw()}};
+$('app').addEventListener('click',onTap);$('dock').addEventListener('click',onTap);
 document.addEventListener('keydown',e=>{if(!$('help').hidden){if(e.key==='Escape')help(false);return}const m={'+':'+','-':'−','*':'×','/':'÷',Backspace:'⌫',Enter:'=','=':'=',Escape:'C',Delete:'C'}[e.key]||(/^\d$/.test(e.key)?e.key:null);
   if(m){e.preventDefault();press(m)}});
 const help=on=>{$('help').hidden=!on};
 // вибрация 50 мс на каждое нажатие кнопки (Android; iPhone вибрацию из браузера не поддерживает)
 document.addEventListener('pointerdown',e=>{if(e.target.closest('button')&&navigator.vibrate)try{navigator.vibrate(50)}catch(_){}},{passive:true});
-$('helpbtn').onclick=()=>help(true);$('helpx').onclick=()=>help(false);
+$('helpx').onclick=()=>help(false);
+// высота нижней панели → отступ снизу у ленты, чтобы схема не пряталась под калькулятором
+new ResizeObserver(()=>document.documentElement.style.setProperty('--dockh',$('dock').offsetHeight+'px')).observe($('dock'));
 $('help').addEventListener('click',e=>{if(e.target.id==='help')help(false)});
 {const box=document.querySelector('.helpbox');let y0=null;
   box.addEventListener('touchstart',e=>{y0=box.scrollTop<=0?e.touches[0].clientY:null},{passive:true});
